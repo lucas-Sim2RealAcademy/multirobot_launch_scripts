@@ -1,0 +1,93 @@
+{
+  "SeeDocsAt": "https://cosys-lab.github.io/Cosys-AirSim/settings/",
+  "SettingsVersion": 2.0,
+  "SimMode": "Multirotor",
+  "ClockType": "ScalableClock",
+  "ViewMode": "SpringArmChase",
+  "SubWindows": [
+    {
+      "WindowID": 0,
+      "CameraName": "front_center",
+      "ImageType": 0,
+      "VehicleName": "ghost",
+      "Visible": true
+    },
+    {
+      "WindowID": 1,
+      "CameraName": "front_center",
+      "ImageType": 3,
+      "VehicleName": "ghost",
+      "Visible": true
+    }
+  ],
+  "Vehicles": {
+    "ghost": {
+      "VehicleType": "SimpleFlight",
+      "AutoCreate": true,
+      "X": 0,
+      "Y": 0,
+      "Z": 0,
+      "Cameras": {
+        "front_center": {
+          "CaptureSettings": [
+            {
+              "ImageType": 0,
+              "Width": 640,
+              "Height": 480,
+              "FOV_Degrees": 69,
+              "TargetGamma": 1.8
+            },
+            {
+              "ImageType": 3,
+              "Width": 640,
+              "Height": 480,
+              "FOV_Degrees": 87
+            }
+          ],
+          "X": 0.1,
+          "Y": 0.0,
+          "Z": 0.0,
+          "Pitch": -20.0,
+          "Roll": 0.0,
+          "Yaw": 0.0
+        },
+        "chase": {
+          "CaptureSettings": [
+            {
+              "ImageType": 0,
+              "Width": 960,
+              "Height": 540,
+              "FOV_Degrees": 90,
+              "TargetGamma": 1.8
+            }
+          ],
+          "X": -4.0,
+          "Y": 0.0,
+          "Z": -1.5,
+          "Pitch": -15.0,
+          "Roll": 0.0,
+          "Yaw": 0.0
+        }
+      },
+      "Sensors": {
+        "imu": {
+          "SensorType": 2,
+          "Enabled": true
+        },
+        "lidar_down": {
+          "SensorType": 5,
+          "Enabled": true,
+          "MinDistance": 0.05,
+          "MaxDistance": 12.0,
+          "X": 0.0,
+          "Y": 0.0,
+          "Z": 0.0,
+          "Pitch": -90.0,
+          "Roll": 0.0,
+          "Yaw": 0.0,
+          "DrawDebugPoints": true
+        }
+      }
+    }
+  }
+}
