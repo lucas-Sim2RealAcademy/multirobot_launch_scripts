@@ -36,7 +36,7 @@ from px4_msgs.msg import (TrajectorySetpoint, VehicleLocalPosition,
 
 OUT = os.environ.get('NB_OUT', '/home/lucas/hercules-sim/e1_frames/cuvslam_run')
 RUN_SECONDS = float(os.environ.get('NB_SECONDS', '150'))
-VEH = 'ghost'
+VEH = os.environ.get('NB_VEH', 'ghost')
 FLIGHT_Z = -1.0
 FOV = 87.0
 BASELINE = 0.05
@@ -330,6 +330,7 @@ def capture_loop(bridge, cli, stop_evt):
 
 
 def main():
+    time.sleep(float(os.environ.get('NB_STAGGER', '0')))
     ctl = airsim.MultirotorClient()
     ctl.confirmConnection()
     for attempt in range(4):
@@ -362,8 +363,10 @@ def main():
         threading.Thread(target=stereo_loop, args=(bridge, clis[0], stop_evt), daemon=True),
         threading.Thread(target=imu_loop, args=(bridge, clis[1], stop_evt), daemon=True),
         threading.Thread(target=depth_loop, args=(bridge, clis[2], stop_evt), daemon=True),
-        threading.Thread(target=capture_loop, args=(bridge, clis[3], stop_evt), daemon=True),
     ]
+    if os.environ.get('NB_CAPTURE', '1') == '1':
+        threads.append(threading.Thread(
+            target=capture_loop, args=(bridge, clis[3], stop_evt), daemon=True))
     for t in threads:
         t.start()
 
