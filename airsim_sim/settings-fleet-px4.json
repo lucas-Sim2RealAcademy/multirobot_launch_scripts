@@ -4,10 +4,6 @@
   "SimMode": "Multirotor",
   "ClockType": "SteppableClock",
   "ViewMode": "SpringArmChase",
-  "SubWindows": [
-    { "WindowID": 0, "CameraName": "front_center", "ImageType": 0, "VehicleName": "ghost", "Visible": true },
-    { "WindowID": 1, "CameraName": "front_center", "ImageType": 3, "VehicleName": "ghost", "Visible": true }
-  ],
   "Vehicles": {
     "ghost": {
       "VehicleType": "PX4Multirotor",
@@ -18,7 +14,7 @@
       "ControlPortRemote": 14580,
       "LocalHostIp": "127.0.0.1",
       "LockStep": true,
-      "X": 0, "Y": 0, "Z": 0,
+      "X": -7.0, "Y": -7.0, "Z": 0,
       "Parameters": {
         "NAV_RCL_ACT": 2,
         "COM_RC_LOSS_T": 0.5,
@@ -30,15 +26,35 @@
         "COM_POS_FS_DELAY": 1,
         "NAV_DLL_ACT": 0,
         "COM_RC_IN_MODE": 1,
-        "MPC_XY_VEL_MAX": 3.0
+        "MPC_XY_VEL_MAX": 3.0,
+        "MIS_TAKEOFF_ALT": 1.2,
+        "EKF2_EV_CTRL": 15,
+        "EKF2_HGT_REF": 3,
+        "EKF2_EV_DELAY": 33.0,
+        "EKF2_EV_QMIN": 0
       },
       "Cameras": {
         "front_center": {
           "CaptureSettings": [
             { "ImageType": 0, "Width": 640, "Height": 480, "FOV_Degrees": 69, "TargetGamma": 1.8 },
+            { "ImageType": 1, "Width": 640, "Height": 480, "FOV_Degrees": 87 },
             { "ImageType": 3, "Width": 640, "Height": 480, "FOV_Degrees": 87 }
           ],
-          "X": 0.10, "Y": 0.0, "Z": 0.0,
+          "X": 0.30, "Y": 0.0, "Z": 0.05,
+          "Pitch": -20.0, "Roll": 0.0, "Yaw": 0.0
+        },
+        "front_left": {
+          "CaptureSettings": [
+            { "ImageType": 0, "Width": 640, "Height": 480, "FOV_Degrees": 87, "TargetGamma": 1.8 }
+          ],
+          "X": 0.30, "Y": -0.025, "Z": 0.05,
+          "Pitch": -20.0, "Roll": 0.0, "Yaw": 0.0
+        },
+        "front_right": {
+          "CaptureSettings": [
+            { "ImageType": 0, "Width": 640, "Height": 480, "FOV_Degrees": 87, "TargetGamma": 1.8 }
+          ],
+          "X": 0.30, "Y": 0.025, "Z": 0.05,
           "Pitch": -20.0, "Roll": 0.0, "Yaw": 0.0
         },
         "chase": {
