@@ -37,6 +37,10 @@ from px4_msgs.msg import (TrajectorySetpoint, VehicleLocalPosition,
 OUT = os.environ.get('NB_OUT', '/home/lucas/hercules-sim/e1_frames/cuvslam_run')
 RUN_SECONDS = float(os.environ.get('NB_SECONDS', '150'))
 VEH = os.environ.get('NB_VEH', 'ghost')
+# NB_SENSORS=0 hands the stereo/IMU/depth streams (and their static TFs) to the C++
+# airsim_realsense_node (Q9); this bridge then only flies the drone, stubs PX4 status and
+# does the chase-cam capture. Default 1 keeps the original standalone behaviour.
+SENSORS = os.environ.get('NB_SENSORS', '1') == '1'
 FLIGHT_Z = -1.0
 FOV = 87.0
 BASELINE = 0.05
@@ -112,36 +116,37 @@ class CuvslamBridge(Node):
             VehicleLocalPosition, '/fmu/out/vehicle_local_position', px4_qos)
         self.vstat_pub = self.create_publisher(
             VehicleStatus, '/fmu/out/vehicle_status', px4_qos)
-        self.left_pub = self.create_publisher(Image, '/sim/ir_left/image', 10)
-        self.right_pub = self.create_publisher(Image, '/sim/ir_right/image', 10)
-        self.li_pub = self.create_publisher(
-            CameraInfo, '/sim/ir_left/camera_info', 10)
-        self.ri_pub = self.create_publisher(
-            CameraInfo, '/sim/ir_right/camera_info', 10)
-        self.imu_pub = self.create_publisher(Imu, '/sim/imu', 50)
-        self.depth_pub = self.create_publisher(Image, '/sim/depth/image', 10)
-        self.dinfo_pub = self.create_publisher(
-            CameraInfo, '/sim/depth/camera_info', 10)
+        if SENSORS:
+            self.left_pub = self.create_publisher(Image, '/sim/ir_left/image', 10)
+            self.right_pub = self.create_publisher(Image, '/sim/ir_right/image', 10)
+            self.li_pub = self.create_publisher(
+                CameraInfo, '/sim/ir_left/camera_info', 10)
+            self.ri_pub = self.create_publisher(
+                CameraInfo, '/sim/ir_right/camera_info', 10)
+            self.imu_pub = self.create_publisher(Imu, '/sim/imu', 50)
+            self.depth_pub = self.create_publisher(Image, '/sim/depth/image', 10)
+            self.dinfo_pub = self.create_publisher(
+                CameraInfo, '/sim/depth/camera_info', 10)
 
-        # Static TF: optical frames hang off camera0_link, whose pose in odom
-        # is owned by the REAL odom_correction node (from REAL cuVSLAM).
-        self.static_bc = StaticTransformBroadcaster(self)
-        now = self.get_clock().now().to_msg()
-        self.static_bc.sendTransform([
-            tfmsg(now, 'camera0_link', 'camera0_infra1_optical_frame',
-                  (0.0, 0.025, 0.0), Q_OPTICAL),
-            tfmsg(now, 'camera0_link', 'camera0_infra2_optical_frame',
-                  (0.0, -0.025, 0.0), Q_OPTICAL),
-            tfmsg(now, 'camera0_link', 'camera0_depth_optical_frame',
-                  (0.0, 0.0, 0.0), Q_OPTICAL),
-            tfmsg(now, 'camera0_link', 'camera0_gyro_optical_frame',
-                  (0.0, 0.0, 0.0), Q_OPTICAL),
-        ])
+            # Static TF: optical frames hang off camera0_link, whose pose in odom
+            # is owned by the REAL odom_correction node (from REAL cuVSLAM).
+            self.static_bc = StaticTransformBroadcaster(self)
+            now = self.get_clock().now().to_msg()
+            self.static_bc.sendTransform([
+                tfmsg(now, 'camera0_link', 'camera0_infra1_optical_frame',
+                      (0.0, 0.025, 0.0), Q_OPTICAL),
+                tfmsg(now, 'camera0_link', 'camera0_infra2_optical_frame',
+                      (0.0, -0.025, 0.0), Q_OPTICAL),
+                tfmsg(now, 'camera0_link', 'camera0_depth_optical_frame',
+                      (0.0, 0.0, 0.0), Q_OPTICAL),
+                tfmsg(now, 'camera0_link', 'camera0_gyro_optical_frame',
+                      (0.0, 0.0, 0.0), Q_OPTICAL),
+            ])
 
-        self.li = make_cinfo(640, 480, 'camera0_infra1_optical_frame')
-        self.ri = make_cinfo(640, 480, 'camera0_infra2_optical_frame',
-                             tx=BASELINE)
-        self.di = make_cinfo(640, 480, 'camera0_depth_optical_frame')
+            self.li = make_cinfo(640, 480, 'camera0_infra1_optical_frame')
+            self.ri = make_cinfo(640, 480, 'camera0_infra2_optical_frame',
+                                 tx=BASELINE)
+            self.di = make_cinfo(640, 480, 'camera0_depth_optical_frame')
 
         self.create_subscription(TrajectorySetpoint,
                                  'planning/trajectory_setpoint',
@@ -352,21 +357,27 @@ def main():
         time.sleep(0.3)
     print('airborne', flush=True)
 
-    clis = [airsim.MultirotorClient() for _ in range(4)]
+    capture = os.environ.get('NB_CAPTURE', '1') == '1'
+    # One RPC connection per live loop only — idle clients still occupy AirSim rpclib
+    # worker-pool slots that the C++ sensor node needs when NB_SENSORS=0.
+    n_clis = (3 if SENSORS else 0) + (1 if capture else 0)
+    clis = [airsim.MultirotorClient() for _ in range(n_clis)]
     for c in clis:
         c.confirmConnection()
 
     rclpy.init()
     bridge = CuvslamBridge(ctl)
     stop_evt = threading.Event()
-    threads = [
-        threading.Thread(target=stereo_loop, args=(bridge, clis[0], stop_evt), daemon=True),
-        threading.Thread(target=imu_loop, args=(bridge, clis[1], stop_evt), daemon=True),
-        threading.Thread(target=depth_loop, args=(bridge, clis[2], stop_evt), daemon=True),
-    ]
-    if os.environ.get('NB_CAPTURE', '1') == '1':
+    threads = []
+    if SENSORS:
+        threads += [
+            threading.Thread(target=stereo_loop, args=(bridge, clis[0], stop_evt), daemon=True),
+            threading.Thread(target=imu_loop, args=(bridge, clis[1], stop_evt), daemon=True),
+            threading.Thread(target=depth_loop, args=(bridge, clis[2], stop_evt), daemon=True),
+        ]
+    if capture:
         threads.append(threading.Thread(
-            target=capture_loop, args=(bridge, clis[3], stop_evt), daemon=True))
+            target=capture_loop, args=(bridge, clis[-1], stop_evt), daemon=True))
     for t in threads:
         t.start()
 
