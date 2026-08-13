@@ -22,7 +22,8 @@ for d in "$LOG"/${SRC}_*/; do
 done
 # leave a copy of the labelled artifacts in place under the new label too, so
 # vio_metrics.py <newlabel> works directly against e1_frames.
-for f in "$DST"/*_${SRC}_*.log "$DST"/*_${SRC}.log "$DST"/scorecard_${SRC}.txt; do
+for f in "$DST"/*_${SRC}_*.log "$DST"/*_${SRC}.log "$DST"/*_${SRC}.csv \
+         "$DST"/scorecard_${SRC}.txt; do
   [ -e "$f" ] || continue
   mv "$f" "$(dirname "$f")/$(basename "$f" | sed "s/${SRC}/${NEW}/")"
 done

@@ -58,6 +58,9 @@ YAW_RATE_LIMIT_DEG_S = float(os.environ.get('HERC_YAW_RATE_LIMIT', '20.0'))
 # how slowly the command got there.  The limiter must therefore also bound the command's
 # LEAD over the actual yaw.  = rate * the 0.5 s _apply_sp period.
 YAW_MAX_LEAD_DEG = float(os.environ.get('HERC_YAW_MAX_LEAD', '10.0'))
+# Below this distance a setpoint is a rotate-in-place command, not a flight
+# command; drive yaw explicitly (see _send_sp).
+ROTATE_IN_PLACE_M = float(os.environ.get('HERC_ROTATE_IN_PLACE_M', '0.6'))
 
 
 def qmul(a, b):
@@ -294,7 +297,23 @@ class CuvslamBridge(Node):
         self._send_sp(px, py, pz)
 
     def _send_sp(self, px, py, pz):
+        # Rotate-in-place deadlock fix.  The planner latches its current NED
+        # position and republishes it with a new yaw whenever heading error
+        # exceeds 45 deg (simple_exploration_planner.py:905-913).  Handing that
+        # to moveToPositionAsync gives SimpleFlight start == goal, so it flies
+        # nowhere AND never yaws: the planner then waits forever on
+        # yaw_aligned_for_wp and only escapes via the 30 s replan timeout
+        # (measured: fleet frozen 57-79% of every run).  When the commanded
+        # position is effectively where we already are, drive the yaw
+        # explicitly instead.
         try:
+            dist = math.hypot(px - self.ned[0], py - self.ned[1])
+            yaw_err = abs((self._yaw_cmd - math.degrees(self.ned[3]) + 180.0)
+                          % 360.0 - 180.0)
+            if dist < ROTATE_IN_PLACE_M and yaw_err > 2.0:
+                self.ctl.rotateToYawAsync(self._yaw_cmd, timeout_sec=3.0,
+                                          margin=2.0, vehicle_name=VEH)
+                return
             self.ctl.moveToPositionAsync(
                 px, py, pz, 1.5,
                 drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom,

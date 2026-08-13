@@ -58,6 +58,29 @@ mkdir -p $LOG
 
 [ -x "$RS_NODE" ] || { echo "airsim_realsense_node not built at $RS_NODE"; exit 1; }
 
+# ---- FIX 1 / BUG-LIST-VERIFIED.md #8 (fis-bbox): one box, both consumers ----
+# FIS defaults to a hardcoded +/-10 m AABB pinned to its own launch origin
+# (frontier_info_structure_node.cpp:18-23) and this script used to override
+# nothing: `fis.launch.py flight_height:=1.0` and a planner started with no
+# bbox args BOTH silently took that default, so each drone only ever looked
+# for frontiers inside a 20x20 m box around its own spawn -- a different box
+# per vehicle, and smaller than the arena the fidelity scorecard measures.
+# Hand both the same TEAM box: the union of every vehicle's +/-ARENA_HALF box
+# around its spawn (exactly fidelity_scorecard.sh's arena), expressed in each
+# vehicle's own odom/FLU frame.  HERC_TEAM_BBOX=0 restores the old defaults
+# for an A/B without editing this file.
+ARENA_HALF=${HERC_ARENA_HALF_M:-10.0}
+TEAM_BBOX=${HERC_TEAM_BBOX:-1}
+BBOX=()
+if [ "$TEAM_BBOX" = "1" ]; then
+  mapfile -t BBOX < <(python3 "$BASE/investigation/vio/team_box.py" \
+      "$BASE/settings-fleet-${N}drone.json" "$ARENA_HALF" "${NAMES[@]:0:$N}")
+  echo "team box (own odom frame), shared by FIS and planner:"
+  for idx in $(seq 0 $((N-1))); do
+    echo "  ${NAMES[$idx]}: ${BBOX[$idx]}"
+  done
+fi
+
 # ---- host prep: loopback DDS discovery for the bridges (runbook 1.2) ----
 sudo -n ip link set lo multicast on || true
 sudo -n ip route replace 239.255.0.0/16 dev lo || true
@@ -124,6 +147,15 @@ PIDS=()
 for idx in $(seq 0 $((N-1))); do
   VEH=${NAMES[$idx]}
   DOM=$((idx+1))
+  # FIX 1: this vehicle's slice of the team box, or empty (stock defaults)
+  FIS_BBOX_ARGS=(); PLN_BBOX_ARGS=()
+  if [ ${#BBOX[@]} -gt 0 ]; then
+    read -r BX0 BY0 BX1 BY1 <<< "${BBOX[$idx]}"
+    FIS_BBOX_ARGS=(bbox_min_x:=$BX0 bbox_min_y:=$BY0
+                   bbox_max_x:=$BX1 bbox_max_y:=$BY1)
+    PLN_BBOX_ARGS=(-p bbox_min_x:=$BX0 -p bbox_min_y:=$BY0
+                   -p bbox_max_x:=$BX1 -p bbox_max_y:=$BY1)
+  fi
   (
     export ROS_DOMAIN_ID=$DOM
     # C++ sensor node FIRST so cuVSLAM/nvblox find live publishers as they come up.
@@ -168,6 +200,7 @@ for idx in $(seq 0 $((N-1))); do
       -r camera_0/depth/camera_info:=/sim/depth/camera_info \
       > $LOG/nvblox_${LABEL}_$VEH.log 2>&1 &
     ros2 launch active_exploration fis.launch.py flight_height:=1.0 \
+      "${FIS_BBOX_ARGS[@]}" \
       > $LOG/fis_${LABEL}_$VEH.log 2>&1 &
     # REAL coordination stage + REAL radiohive bridge on the virtual radio
     ros2 launch multi_drone_nvblox coordination_stage.launch.py \
@@ -178,6 +211,7 @@ for idx in $(seq 0 $((N-1))); do
       > $LOG/lorabridge_${LABEL}_$VEH.log 2>&1 &
     python3 $BASE/src/active_exploration/scripts/simple_exploration_planner.py \
       --ros-args -p debug_skip_arm_check:=true -p flight_height:=1.0 -p vehicle_id:=$DOM \
+      "${PLN_BBOX_ARGS[@]}" \
       > $LOG/planner_${LABEL}_$VEH.log 2>&1 &
     CAP=$CAPTURE   # capture every drone (2x2 grid video)
     # NB_SENSORS=0: flight + PX4 stub + chase capture only, sensors owned by the C++ node.
