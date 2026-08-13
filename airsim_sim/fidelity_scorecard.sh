@@ -237,30 +237,205 @@ if [ "$LIVE" = "1" ]; then
 fi
 
 printf "%.0s-" {1..90}; echo
-# ---- fleet coverage + overlap (added: real measure of fleet performance) ----
-python3 - "$LABEL" "$LOGDIR" <<'PYEOF' 2>/dev/null || true
-import json,glob,sys,math
-label,logdir=sys.argv[1],sys.argv[2]
-per={}
-for d in glob.glob(f'{logdir}/{label}_*/'):
-    v=d.rstrip('/').split('_')[-1]
-    ms=sorted(glob.glob(d+'meta_*.json'))
-    if not ms: continue
-    cells=set()
-    for m in ms:
-        x,y=json.load(open(m))['ned'][:2]
-        cx,cy=int(x),int(y)
-        for dx in range(-4,5):
-            for dy in range(-4,5):
-                if dx*dx+dy*dy<=16: cells.add((cx+dx,cy+dy))
-    per[v]=cells
-if per:
-    tot=set().union(*per.values()); s=sum(len(c) for c in per.values())
-    ov=100*(1-len(tot)/s) if s else 0
-    st='PASS' if ov<10 else ('WARN' if ov<25 else 'FAIL')
-    for v,c in sorted(per.items()): print(f"{'coverage_m2['+v+']':38s} {'>=600 (solo)':16s} {len(c):<16d} {'-':7s} {'PASS' if len(c)>=600 else 'WARN'}")
-    print(f"{'fleet_unique_m2':38s} {'maximize':16s} {len(tot):<16d} {'-':7s} INFO")
-    print(f"{'fleet_overlap_pct':38s} {'<10 (coordinated)':16s} {ov:<16.0f} {'-':7s} {st}")
+# ---- fleet coverage + overlap (COORDINATION-REDESIGN.md A6) ----------------
+# Four corrections over the original block, which unioned every drone's
+# odom-frame track as if it were world frame (all four tracks start at (0,0),
+# so the fleet looked like it launched from one point):
+#   1. spawn offsets from the settings file used by the run are applied before
+#      unioning, so cells are ARENA-relative;
+#   2. a drone whose ground track leaves its own geofence by >2x is reported
+#      as its own odom_divergence row and dropped from the overlap denominator
+#      (an odometry runaway otherwise *lowers* reported overlap, so a VIO fix
+#      reads as a coordination regression);
+#   3. overlap_floor_pct = max(0, 1 - arena_cells/effort_cells) is reported and
+#      graded against, because <10% is arithmetically impossible at the effort
+#      typically flown into a 20 m arena;
+#   4. fleet_overlap_concurrent_pct (cells hit by >=2 drones within 10 s) is the
+#      coordination-attributable share; the spatial-only number conflates poor
+#      assignment with "launched from the same line".
+# HERC_SETTINGS overrides settings-file autodetection.
+# HERC_ARENA_HALF_M overrides the planner bbox half-extent (default 10.0).
+HERC_SETTINGS="${HERC_SETTINGS:-}" HERC_ARENA_HALF_M="${HERC_ARENA_HALF_M:-10.0}" \
+python3 - "$LABEL" "$LOGDIR" "$BASE" <<'PYEOF' 2>/dev/null || true
+import json, glob, sys, math, os
+
+label, logdir, base = sys.argv[1], sys.argv[2], sys.argv[3]
+ARENA_HALF = float(os.environ.get('HERC_ARENA_HALF_M') or 10.0)
+DT_CONCURRENT_S = 10.0
+DIVERGENCE_FACTOR = 2.0            # track outside 2x its own geofence = runaway
+DISC = [(dx, dy) for dx in range(-4, 5) for dy in range(-4, 5)
+        if dx * dx + dy * dy <= 16]
+
+
+def row(metric, ref, sim, status):
+    print("%-38s %-16s %-16s %-7s %s" % (metric, ref, sim, '-', status))
+
+
+# ---- per-drone ground tracks (AirSim NED truth, relative to own spawn) ----
+tracks = {}
+for d in sorted(glob.glob('%s/%s_*/' % (logdir, label))):
+    v = d.rstrip('/').split('_')[-1]
+    pts = []
+    for m in sorted(glob.glob(d + 'meta_*.json')):
+        try:
+            j = json.load(open(m))
+        except Exception:
+            continue
+        ned = j.get('ned') or []
+        if len(ned) < 2:
+            continue
+        pts.append((float(j.get('t', 0.0)), float(ned[0]), float(ned[1])))
+    if pts:
+        pts.sort()
+        tracks[v] = pts
+if not tracks:
+    sys.exit(0)
+
+# ---- spawn offsets: the settings file this run actually flew ----
+cand = [os.environ['HERC_SETTINGS']] if os.environ.get('HERC_SETTINGS') else []
+cand += sorted(glob.glob('%s/settings-fleet-*.json' % base))
+spawn, settings_used = {}, None
+for path in cand:
+    try:
+        veh = json.load(open(path)).get('Vehicles', {})
+    except Exception:
+        continue
+    if set(tracks) <= set(veh):
+        spawn = {k: (float(v.get('X', 0.0)), float(v.get('Y', 0.0)))
+                 for k, v in veh.items()}
+        settings_used = os.path.basename(path)
+        break
+if not spawn:
+    row('fleet_spawn_offsets', 'settings json', 'NOT FOUND', 'FAIL(no spawn offsets)')
+    spawn = {v: (0.0, 0.0) for v in tracks}
+    settings_used = 'none'
+else:
+    row('fleet_spawn_offsets', 'settings json', settings_used, 'INFO')
+
+# ---- divergence gate: its own row per drone, never a silent denominator edit --
+# The geofence is +/-ARENA_HALF around each drone's OWN odom origin (= its
+# spawn), so the excursion is measured on the raw, spawn-relative track.
+drones = sorted(tracks)
+included, excluded = [], []
+for v in drones:
+    worst = max(max(abs(x), abs(y)) for _t, x, y in tracks[v])
+    if worst > DIVERGENCE_FACTOR * ARENA_HALF:
+        excluded.append(v)
+        row('odom_divergence_m[%s]' % v,
+            '<=%.0f (%gx fence)' % (DIVERGENCE_FACTOR * ARENA_HALF, DIVERGENCE_FACTOR),
+            '%.1f' % worst, 'FAIL(odom_divergence)')
+    else:
+        included.append(v)
+        row('odom_divergence_m[%s]' % v,
+            '<=%.0f (%gx fence)' % (DIVERGENCE_FACTOR * ARENA_HALF, DIVERGENCE_FACTOR),
+            '%.1f' % worst, 'PASS')
+
+# ---- arena: union of every drone's geofence, in arena cells ----
+# All drones, not just the surviving ones: the arena is a property of the
+# fleet's launch geometry, and keeping it fixed is what makes the headline
+# comparable across runs that gate different drone sets.
+arena = set()
+for v in drones:
+    ox, oy = spawn.get(v, (0.0, 0.0))
+    for cx in range(int(ox - ARENA_HALF), int(ox + ARENA_HALF) + 1):
+        for cy in range(int(oy - ARENA_HALF), int(oy + ARENA_HALF) + 1):
+            arena.add((cx, cy))
+
+# ---- coverage: 4 m disc around every arena-frame track sample ----
+per_cells, per_times, per_all = {}, {}, {}
+for v in drones:
+    ox, oy = spawn.get(v, (0.0, 0.0))
+    cells, times, allcells = set(), {}, set()
+    for t, x, y in tracks[v]:
+        # int() truncation, not floor(): keeps cell indices identical to the
+        # pre-A6 block so the only change to the headline is the frame fix.
+        cx = int(x + ox)
+        cy = int(y + oy)
+        for dx, dy in DISC:
+            c = (cx + dx, cy + dy)
+            allcells.add(c)
+            if c in arena:
+                cells.add(c)
+                # visit INTERVALS [t_in, t_out], ascending (pts is time-sorted).
+                # A sample within DT of the running interval extends it; a
+                # later return opens a new one. Keeps the list short without
+                # losing when the drone actually occupied the cell.
+                tl = times.get(c)
+                if tl is None:
+                    times[c] = [[t, t]]
+                elif t - tl[-1][1] > DT_CONCURRENT_S:
+                    tl.append([t, t])
+                else:
+                    tl[-1][1] = t
+    per_cells[v], per_times[v], per_all[v] = cells, times, allcells
+
+def stats(names):
+    eff = sum(len(per_cells[v]) for v in names)
+    uni = set().union(*[per_cells[v] for v in names]) if names else set()
+    ov = 100.0 * (1.0 - len(uni) / eff) if eff else 0.0
+    fl = 100.0 * max(0.0, 1.0 - len(arena) / eff) if eff else 0.0
+    return eff, uni, ov, fl
+
+
+# Headline: ALL drones, spawn-corrected, clipped to the arena. Arena clipping
+# already removes the runaway transit that inflated the old denominator
+# (buckshee's 1705 cells at (150, 88) are simply not arena cells), so the
+# headline stays measurable even when every drone trips the gate.
+effort, unique, overlap, floor = stats(drones)
+# Gated variant (the A6 literal): diverged drones out of the denominator.
+g_effort, g_unique, g_overlap, g_floor = stats(included)
+
+# raw (spawn-corrected, un-gated, un-clipped) for continuity with old runs
+raw_effort = sum(len(c) for c in per_all.values())
+raw_unique = set().union(*per_all.values()) if per_all else set()
+raw_overlap = 100.0 * (1.0 - len(raw_unique) / raw_effort) if raw_effort else 0.0
+
+# ---- concurrent overlap: cells two drones hit within DT_CONCURRENT_S ----
+conc = 0
+for c in unique:
+    holders = [per_times[v][c] for v in drones if c in per_times[v]]
+    if len(holders) < 2:
+        continue
+    hit = False
+    for i in range(len(holders)):
+        for j in range(i + 1, len(holders)):
+            for a in holders[i]:
+                for b in holders[j]:
+                    # gap between two occupancy intervals (<=0 = overlapping)
+                    if max(a[0], b[0]) - min(a[1], b[1]) <= DT_CONCURRENT_S:
+                        hit = True
+                        break
+                if hit:
+                    break
+            if hit:
+                break
+        if hit:
+            break
+    if hit:
+        conc += 1
+conc_pct = 100.0 * conc / len(unique) if unique else 0.0
+
+for v in drones:
+    row('coverage_m2[%s]' % v, '>=600 (solo)', '%d' % len(per_cells[v]),
+        'PASS' if len(per_cells[v]) >= 600 else 'WARN')
+row('fleet_arena_cells', 'geofence union', '%d' % len(arena), 'INFO')
+row('fleet_effort_m2', 'in-arena', '%d' % effort, 'INFO')
+row('fleet_unique_m2', 'maximize', '%d' % len(unique), 'INFO')
+row('overlap_floor_pct', '1-arena/effort', '%.1f' % floor, 'INFO')
+st = ('PASS' if overlap <= floor + 5.0
+      else 'WARN' if overlap <= floor + 15.0 else 'FAIL')
+row('fleet_overlap_pct', '<=floor+5', '%.1f' % overlap, st)
+row('fleet_overlap_concurrent_pct', 'minimize (dt<=10s)', '%.1f' % conc_pct, 'INFO')
+row('fleet_overlap_raw_pct', 'ungated/unclipped', '%.1f' % raw_overlap, 'INFO')
+if excluded:
+    row('fleet_drones_excluded', '0', ','.join(excluded), 'WARN')
+    if len(included) >= 2:
+        row('fleet_unique_m2_gated', 'maximize', '%d' % len(g_unique), 'INFO')
+        row('fleet_overlap_gated_pct', 'floor %.1f' % g_floor,
+            '%.1f' % g_overlap, 'INFO')
+    else:
+        row('fleet_overlap_gated_pct', 'needs >=2 drones',
+            '%d valid' % len(included), 'WARN(unmeasurable)')
 PYEOF
 echo "RESULT: $FAILS FAIL, $WARNS WARN  (label=$LABEL logdir=$LOGDIR)"
 exit $((FAILS>125?125:FAILS))

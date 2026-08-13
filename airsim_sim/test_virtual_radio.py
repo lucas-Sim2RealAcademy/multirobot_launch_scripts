@@ -23,7 +23,10 @@ item 5:
   5. determinism: same seed + same schedule file, two runs, identical
      counters / peer tables / event logs.
 
-Plus a smoke test of the runtime fault API (UDP datagram round trip).
+Plus a smoke test of the runtime fault API (UDP datagram round trip) and the
+COORDINATION-REDESIGN.md A7 regression: window_miss must scale with payload
+size (26 B has a 1 ms launch window, 12 B has 6 ms), which the pre-A7
+cross-cycle `_last_tx_poll` carry made structurally impossible.
 """
 
 import os
@@ -528,6 +531,64 @@ def test_fault_api(tmp):
 
 
 # ===================================================================
+# COORDINATION-REDESIGN.md A7 -- the TX launch window must be size-sensitive
+# ===================================================================
+def _window_miss_run(tmp, size, seconds=12.0, jitter=10.0, seed=7):
+    """Drive every node with a `size`-byte custom pending each cycle and
+    return (window_miss, tx) summed over the mesh."""
+    h = Harness(tmp, loop_jitter_ms=jitter, seed=seed)
+    try:
+        h.run(0.5)                       # let the mesh form
+        data = bytes(range(size))
+        end = h.clock.now() + seconds
+        n = 0
+        while h.clock.now() < end:
+            if n % 100 == 0:             # re-arm the custom every ~50 ms
+                for b in h.bridges:
+                    b.send(T_CUSTOM_MSG, bytes([0xFF]) + data)
+            h.clock.advance(0.0005)
+            h.emu.poll()
+            for b in h.bridges:
+                b.pump()
+            n += 1
+        return (sum(x.counters['window_miss'] for x in h.emu.nodes),
+                sum(x.counters['tx'] for x in h.emu.nodes))
+    finally:
+        h.close()
+
+
+def test_window_miss_scales_with_payload(tmp):
+    """A7 regression. Before the slot-local `_last_tx_poll` fix, the
+    poll-granularity compensation back-dated the first poll of each slot by a
+    whole cycle, so `window_covered` was unconditionally true for every size
+    the 26 B max_tx_size gate admits and `window_miss` was structurally
+    unreachable (radio4: 0 misses / 3790 transmits). Payload-size risk was
+    therefore not modelled at all, and the sim would green-light a 26 B design
+    that has a 1 ms launch window on hardware.
+
+    The launch window shrinks with airtime:
+        12 B -> 50 B PHY -> 24 ms -> win [5, 11] (6 ms span)
+        26 B -> 64 B PHY -> 29 ms -> win [5,  6] (1 ms span)
+    so a mesh whose loop() stalls must miss measurably more often at 26 B.
+    """
+    n12 = V.airtime_int_ms(38 + 12)
+    n26 = V.airtime_int_ms(38 + 26)
+    span12 = V.SLOT_MS - 2 * V.TX_MARGIN_MS - n12
+    span26 = V.SLOT_MS - 2 * V.TX_MARGIN_MS - n26
+    assert span12 == 6 and span26 == 1, (span12, span26)
+
+    m12, tx12 = _window_miss_run(tmp, 12)
+    m26, tx26 = _window_miss_run(tmp, 26)
+    assert m26 > 0, \
+        'window_miss unreachable at 26 B -- the A7 clamp regressed'
+    assert m26 >= 2 * max(m12, 1), \
+        '26 B (%d misses / %d tx) must miss measurably more than 12 B ' \
+        '(%d / %d)' % (m26, tx26, m12, tx12)
+    return ('12B win 6 ms -> %d miss/%d tx; 26B win 1 ms -> %d miss/%d tx'
+            % (m12, tx12, m26, tx26))
+
+
+# ===================================================================
 TESTS = [
     ('airtime_goldens', test_airtime_goldens),
     ('custom_size_gate', test_custom_size_gate),
@@ -536,6 +597,7 @@ TESTS = [
     ('uniform_vs_burst_expiry', test_uniform_vs_burst_expiry),
     ('determinism', test_determinism),
     ('fault_api', test_fault_api),
+    ('window_miss_scales_with_payload', test_window_miss_scales_with_payload),
 ]
 
 

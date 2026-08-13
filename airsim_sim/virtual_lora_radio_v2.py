@@ -647,6 +647,10 @@ class VNode(object):
         self.tx_done_this_cycle = False
         self.last_cycle_num = 0xFFFFFFFF
         self.miss_cycle = None        # bookkeeping only, not firmware state
+        # last loop() instant INSIDE this cycle's own slot (A7); None until the
+        # slot is entered, cleared at every cycle boundary. Purely a
+        # poll-granularity compensation -- never firmware state.
+        self._last_tx_poll = None
 
         self.ser_state = 0
         self.ser_type = 0
@@ -848,6 +852,10 @@ class VNode(object):
             if cn != self.last_cycle_num:
                 self.last_cycle_num = cn
                 self.tx_done_this_cycle = False
+                # A7: the poll-granularity compensation below is SLOT-LOCAL.
+                # Clearing it at the cycle boundary is what makes the launch
+                # window observable at all -- see the long comment there.
+                self._last_tx_poll = None
             slot = self.current_slot(now)
             if slot == self.node_id and not self.tx_done_this_cycle:
                 slot_start = u32(self.cycle_epoch
@@ -872,10 +880,28 @@ class VNode(object):
                 # earliest legal instant (fw:451-453 semantics, not our poll
                 # granularity).  Without this the emulator misses a 4 ms
                 # claim window ~100% of the time -- a sim artifact.
+                #
+                # A7 (COORDINATION-REDESIGN.md): that compensation must be
+                # SLOT-LOCAL.  _last_tx_poll is only ever written here, inside
+                # the node's own-slot branch, so if it is allowed to carry
+                # across cycles the first poll of each slot back-dates itself
+                # by a whole cycle (prev_in_slot ~ time_in_slot - 190) and
+                # window_covered is unconditionally true for every airtime the
+                # 26 B max_tx_size gate admits -- window_miss then becomes
+                # structurally unreachable (measured: 0 misses / 3790
+                # transmits) and payload-size risk is not modelled at all.
+                # With the cycle-boundary reset above, the first in-slot poll
+                # covers only itself, so a node whose loop stalls past win_hi
+                # genuinely misses -- and win_hi shrinks with airtime, which is
+                # exactly the size risk the emulator has to reproduce
+                # (26 B: win_hi = 6 ms; 12 B: win_hi = 11 ms).
                 win_lo = TX_MARGIN_MS
                 win_hi = SLOT_MS - TX_MARGIN_MS - this_airtime
-                prev_in_slot = time_in_slot - max(
-                    int((now - getattr(self, '_last_tx_poll', now))), 0)
+                if self._last_tx_poll is None:
+                    prev_in_slot = time_in_slot   # first loop() in this slot
+                else:
+                    prev_in_slot = time_in_slot - max(
+                        int(now - self._last_tx_poll), 0)
                 self._last_tx_poll = now
                 window_covered = (win_hi >= win_lo and
                                   prev_in_slot <= win_hi and
