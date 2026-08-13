@@ -5,7 +5,7 @@
 #   stereo+IMU -> cuVSLAM -> odom_correction -> nvblox -> FIS -> planner
 #   cuVSLAM -> vio_bridge -> /fmu/in/vehicle_visual_odometry -> EKF2
 #   planner -> reactive_depth_guard (SOLE /fmu/in writer) -> PX4
-# Flight entry mirrors the field: commander takeoff, then Offboard.
+# Flight entry mirrors the field: virtual RC pilot (Position arm -> stick takeoff -> Offboard).
 # usage: run_px4_sim.sh <label> [seconds]
 set -e
 LABEL=${1:-px4_run}; SECS=${2:-180}
@@ -48,6 +48,31 @@ for i in $(seq 1 80); do grep -q "Simulator connected" $LOG/px4_$LABEL.log 2>/de
 grep -q "Simulator connected" $LOG/px4_$LABEL.log || { echo "PX4<->AirSim link failed"; exit 1; }
 for i in $(seq 1 60); do ss -ltn | grep -q 41451 && break; sleep 3; done
 echo "airsim + px4 linked"
+
+# ---- staged EV bring-up ladder (Q4) ----
+# MUST be injected AFTER the AirSim link: AirSim pushes settings.json
+# Parameters at connect (MavLinkMultirotorApi.hpp:531,1552) and would
+# overwrite anything set earlier. SITL persists params in
+# eeprom/parameters.bson, so every stage sets the FULL triple both ways.
+#   EV_STAGE=1  EV horizontal pos + vel + yaw   (baro/GPS still own height)
+#   EV_STAGE=2  + EV height reference           (EKF2_HGT_REF=3)
+#   EV_STAGE=3  + GPS off                       (pure vision, field config)
+EV_STAGE=${EV_STAGE:-1}
+case $EV_STAGE in
+  1) EV_CTRL=13; HGT_REF=0; GPS_CTRL=7 ;;   # 13 = pos_h|vel|yaw, no vertical
+  2) EV_CTRL=15; HGT_REF=3; GPS_CTRL=7 ;;
+  3) EV_CTRL=15; HGT_REF=3; GPS_CTRL=0 ;;
+  *) echo "bad EV_STAGE=$EV_STAGE"; exit 1 ;;
+esac
+{
+  echo "param set EKF2_EV_CTRL $EV_CTRL"
+  echo "param set EKF2_HGT_REF $HGT_REF"
+  echo "param set EKF2_GPS_CTRL $GPS_CTRL"
+  echo "param set EKF2_EV_DELAY 33.0"
+  echo "param set EKF2_EV_QMIN 10"     # arm the quality gate vio_bridge now feeds
+} >&4
+sleep 2
+echo "EV stage $EV_STAGE: EV_CTRL=$EV_CTRL HGT_REF=$HGT_REF GPS_CTRL=$GPS_CTRL QMIN=10"
 
 # ---- XRCE agent (UDP; SITL client connects to 8888) ----
 MicroXRCEAgent udp4 -p 8888 > $LOG/xrce_$LABEL.log 2>&1 &
@@ -105,14 +130,18 @@ NB_OUT=$LOG/$LABEL NB_SECONDS=$SECS \
   $BASE/venv/bin/python -u $BASE/px4_sim_bridge.py > $LOG/bridge_$LABEL.log 2>&1 &
 BRIDGE_PID=$!
 
-# ---- flight entry (field-mirroring): wait for EKF2+EV, takeoff, offboard ----
-sleep 35
-echo "commander takeoff" >&4
-sleep 12
-echo "commander mode offboard" >&4
-echo "flight entry issued"
+# ---- flight entry: virtual RC pilot doing the field ritual (Q3) ----
+# Position-mode stick arm -> stick takeoff -> hover -> Offboard switch, then
+# keeps streaming centered sticks so RC-loss and Offboard->POSCTL failsafes
+# stay REACHABLE (a blind 'commander takeoff' made them unreachable).
+PILOT_ARGS=${PILOT_ARGS:-"--alt 1.0"}
+$BASE/venv2/bin/python -u $BASE/tools/virtual_pilot.py $PILOT_ARGS \
+  > $LOG/pilot_$LABEL.log 2>&1 &
+PILOT_PID=$!
+echo "virtual pilot started (pid $PILOT_PID, args: $PILOT_ARGS)"
 
 wait $BRIDGE_PID || true
+kill $PILOT_PID 2>/dev/null || true
 echo "commander land" >&4
 sleep 8
 pkill -9 -x px4 || true
@@ -127,3 +156,7 @@ pkill -f "[v]io_bridge" || true
 pkill -f "[s]imple_exploration_planner" || true
 exec 4>&-
 echo "run $LABEL complete"
+
+# ---- fidelity scorecard (Q7) ----
+$BASE/fidelity_scorecard.sh "$LABEL" "$LOG" > $LOG/scorecard_$LABEL.txt 2>&1 || true
+echo "--- fidelity scorecard ($LABEL): $(grep -c FAIL $LOG/scorecard_$LABEL.txt 2>/dev/null) FAIL lines -> $LOG/scorecard_$LABEL.txt"

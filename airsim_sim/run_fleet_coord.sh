@@ -52,7 +52,7 @@ echo "airsim up with $N vehicles"
 # ---- zenoh bridges (runbook 1.4) ----
 ZB=$BASE/bin/zenoh-bridge-ros2dds
 for i in $(seq 1 $N); do
-  env CYCLONEDDS_URI='<CycloneDDS><Domain><General><Interfaces><NetworkInterface address="127.0.0.1"/></Interfaces></General><Discovery><MaxAutoParticipantIndex>200</MaxAutoParticipantIndex></Discovery></Domain></CycloneDDS>' \
+  env CYCLONEDDS_URI='<CycloneDDS><Domain><Discovery><MaxAutoParticipantIndex>200</MaxAutoParticipantIndex></Discovery></Domain></CycloneDDS>' \
       RUST_LOG='zenoh=warn,zenoh_plugin_ros2dds=info' ROS_DOMAIN_ID=$i \
       "$ZB" -c /tmp/zenoh_sim_d$i.json5 > $LOG/zenoh_${LABEL}_d$i.log 2>&1 &
 done
@@ -138,3 +138,7 @@ pkill -f "[a]lignment_manager" || true
 pkill -f "[k]eyframe_exchange" || true
 pkill -f "[p]eer_map_integrator" || true
 echo "run $LABEL complete"
+
+# ---- fidelity scorecard (Q7) ----
+$BASE/fidelity_scorecard.sh "$LABEL" "$LOG" > $LOG/scorecard_$LABEL.txt 2>&1 || true
+echo "--- fidelity scorecard ($LABEL): $(grep -c FAIL $LOG/scorecard_$LABEL.txt 2>/dev/null) FAIL lines -> $LOG/scorecard_$LABEL.txt"

@@ -234,10 +234,10 @@ class CuvslamBridge(Node):
         self.dinfo_pub.publish(self.di)
 
     def _sp_cb(self, msg):
-        self.sp, self.sp_time = msg, time.time()
+        self.sp, self.sp_time = msg, time.monotonic()
 
     def _apply_sp(self):
-        if self.sp is None or (time.time() - self.sp_time) > 2.0:
+        if self.sp is None or (time.monotonic() - self.sp_time) > 2.0:
             return
         px, py, pz = (float(self.sp.position[0]), float(self.sp.position[1]),
                       float(self.sp.position[2]))
@@ -370,9 +370,9 @@ def main():
     for t in threads:
         t.start()
 
-    t_end = time.time() + RUN_SECONDS
+    t_end = time.monotonic() + RUN_SECONDS
     try:
-        while time.time() < t_end:
+        while time.monotonic() < t_end:
             rclpy.spin_once(bridge, timeout_sec=0.02)
     finally:
         stop_evt.set()

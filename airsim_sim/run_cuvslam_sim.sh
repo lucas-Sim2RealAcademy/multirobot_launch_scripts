@@ -9,7 +9,8 @@ NVBLOX_YAML=$BASE/src/isaac_ros_nvblox/nvblox_examples/nvblox_examples_bringup/c
 source /opt/ros/humble/setup.bash
 source $BASE/ros2_ws/install/setup.bash
 export ROS_DOMAIN_ID=42 ROS_LOCALHOST_ONLY=1
-mkdir -p $BASE/e1_frames
+LOG=$BASE/e1_frames
+mkdir -p $LOG
 
 # fresh sim instance
 pkill -f "UnrealEditor.*[B]locks" 2>/dev/null || true
@@ -91,3 +92,7 @@ NB_OUT=$BASE/e1_frames/$LABEL NB_SECONDS=$SECS \
 kill $PLANNER_PID $FIS_PID $NVBLOX_PID $ODOM_PID $VSLAM_PID 2>/dev/null || true
 sleep 1
 echo "run $LABEL complete"
+
+# ---- fidelity scorecard (Q7) ----
+$BASE/fidelity_scorecard.sh "$LABEL" "$LOG" > $LOG/scorecard_$LABEL.txt 2>&1 || true
+echo "--- fidelity scorecard ($LABEL): $(grep -c FAIL $LOG/scorecard_$LABEL.txt 2>/dev/null) FAIL lines -> $LOG/scorecard_$LABEL.txt"

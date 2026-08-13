@@ -102,3 +102,7 @@ pkill -f "[n]vblox_node" || true
 pkill -f "[f]rontier_info" || true
 pkill -f "[s]imple_exploration_planner" || true
 echo "run $LABEL complete"
+
+# ---- fidelity scorecard (Q7) ----
+$BASE/fidelity_scorecard.sh "$LABEL" "$LOG" > $LOG/scorecard_$LABEL.txt 2>&1 || true
+echo "--- fidelity scorecard ($LABEL): $(grep -c FAIL $LOG/scorecard_$LABEL.txt 2>/dev/null) FAIL lines -> $LOG/scorecard_$LABEL.txt"
