@@ -864,6 +864,24 @@ class VNode(object):
                     this_airtime = airtime_int_ms(
                         self.base_packet + self.custom_len) \
                         or self.packet_airtime_ms
+                # The real ESP32 loop() runs at ~kHz, so it samples the
+                # launch window many times; only a genuine loop stall makes it
+                # miss (that is what loop-jitter models).  Our Python poll is
+                # far coarser, so treat the window as HIT if it fell anywhere
+                # inside the interval this poll covered, and launch at the
+                # earliest legal instant (fw:451-453 semantics, not our poll
+                # granularity).  Without this the emulator misses a 4 ms
+                # claim window ~100% of the time -- a sim artifact.
+                win_lo = TX_MARGIN_MS
+                win_hi = SLOT_MS - TX_MARGIN_MS - this_airtime
+                prev_in_slot = time_in_slot - max(
+                    int((now - getattr(self, '_last_tx_poll', now))), 0)
+                self._last_tx_poll = now
+                window_covered = (win_hi >= win_lo and
+                                  prev_in_slot <= win_hi and
+                                  time_in_slot >= win_lo)
+                if window_covered:
+                    time_in_slot = max(win_lo, min(time_in_slot, win_hi))
                 if (time_in_slot >= TX_MARGIN_MS and
                         time_in_slot + this_airtime <= SLOT_MS - TX_MARGIN_MS):
                     self.in_rx = False

@@ -237,5 +237,31 @@ if [ "$LIVE" = "1" ]; then
 fi
 
 printf "%.0s-" {1..90}; echo
+# ---- fleet coverage + overlap (added: real measure of fleet performance) ----
+python3 - "$LABEL" "$LOGDIR" <<'PYEOF' 2>/dev/null || true
+import json,glob,sys,math
+label,logdir=sys.argv[1],sys.argv[2]
+per={}
+for d in glob.glob(f'{logdir}/{label}_*/'):
+    v=d.rstrip('/').split('_')[-1]
+    ms=sorted(glob.glob(d+'meta_*.json'))
+    if not ms: continue
+    cells=set()
+    for m in ms:
+        x,y=json.load(open(m))['ned'][:2]
+        cx,cy=int(x),int(y)
+        for dx in range(-4,5):
+            for dy in range(-4,5):
+                if dx*dx+dy*dy<=16: cells.add((cx+dx,cy+dy))
+    per[v]=cells
+if per:
+    tot=set().union(*per.values()); s=sum(len(c) for c in per.values())
+    ov=100*(1-len(tot)/s) if s else 0
+    st='PASS' if ov<10 else ('WARN' if ov<25 else 'FAIL')
+    for v,c in sorted(per.items()): print(f"{'coverage_m2['+v+']':38s} {'>=600 (solo)':16s} {len(c):<16d} {'-':7s} {'PASS' if len(c)>=600 else 'WARN'}")
+    print(f"{'fleet_unique_m2':38s} {'maximize':16s} {len(tot):<16d} {'-':7s} INFO")
+    print(f"{'fleet_overlap_pct':38s} {'<10 (coordinated)':16s} {ov:<16.0f} {'-':7s} {st}")
+PYEOF
 echo "RESULT: $FAILS FAIL, $WARNS WARN  (label=$LABEL logdir=$LOGDIR)"
 exit $((FAILS>125?125:FAILS))
+
