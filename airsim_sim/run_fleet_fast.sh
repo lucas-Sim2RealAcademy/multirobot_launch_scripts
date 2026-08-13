@@ -157,7 +157,7 @@ for idx in $(seq 0 $((N-1))); do
     python3 $BASE/src/active_exploration/scripts/simple_exploration_planner.py \
       --ros-args -p debug_skip_arm_check:=true -p flight_height:=1.0 \
       > $LOG/planner_${LABEL}_$VEH.log 2>&1 &
-    CAP=0; [ "$VEH" = "ghost" ] && CAP=$CAPTURE
+    CAP=$CAPTURE   # capture every drone (2x2 grid video)
     # NB_SENSORS=0: flight + PX4 stub + chase capture only, sensors owned by the C++ node.
     NB_OUT=$LOG/${LABEL}_$VEH NB_SECONDS=$SECS NB_VEH=$VEH \
       NB_CAPTURE=$CAP NB_SENSORS=0 NB_STAGGER=$((idx*4)) \
