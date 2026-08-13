@@ -59,12 +59,14 @@ span_of() {
 }
 cnt() { local c; c=$(grep -c "$1" "$2" 2>/dev/null); echo "${c:-0}"; }
 
-drones=$(ls "$LOGDIR"/bridge_"${LABEL}"_*.log 2>/dev/null | sed -E "s/.*bridge_${LABEL}_(.*)\.log/\1/")
+drones=$(ls "$LOGDIR"/rsnode_"${LABEL}"_*.log 2>/dev/null | sed -E "s/.*rsnode_${LABEL}_(.*)\.log/\1/")
+[ -z "$drones" ] && drones=$(ls "$LOGDIR"/bridge_"${LABEL}"_*.log 2>/dev/null | sed -E "s/.*bridge_${LABEL}_(.*)\.log/\1/")
 [ -z "$drones" ] && [ -f "$LOGDIR/bridge_${LABEL}.log" ] && drones="_single"
 
 for d in $drones; do
   sfx="_${d}"; [ "$d" = "_single" ] && sfx=""
   BLOG=$LOGDIR/bridge_${LABEL}${sfx}.log
+  RLOG=$LOGDIR/rsnode_${LABEL}${sfx}.log   # C++ sensor node (Q9) — authoritative
   PLOG=$LOGDIR/planner_${LABEL}${sfx}.log
   CLOG=$LOGDIR/cuvslam_${LABEL}${sfx}.log
   FLOG=$LOGDIR/fis_${LABEL}${sfx}.log
@@ -73,20 +75,32 @@ for d in $drones; do
   DUR=$(span_of "$PLOG"); [ -z "$DUR" ] && DUR=$(span_of "$FLOG"); [ -z "$DUR" ] && DUR=190
 
   # ---- 1. stereo rate [F4][F15]: field 30 Hz (infra pair). pass>=27 warn>=15
-  if [ -f "$BLOG" ]; then
-    pairs=$(grep -oE 'stereo pairs=[0-9]+' "$BLOG" | tail -1 | grep -oE '[0-9]+')
-    if [ -n "${pairs:-}" ]; then
+  if [ -f "$RLOG" ] || [ -f "$BLOG" ]; then
+    hz=""
+    if [ -f "$RLOG" ]; then
+      hz=$(grep -oE 'stereo [0-9.]+ Hz' "$RLOG" | tail -1 | grep -oE '[0-9.]+')
+    fi
+    pairs=$(grep -oE 'stereo pairs=[0-9]+' "$BLOG" 2>/dev/null | tail -1 | grep -oE '[0-9]+')
+    if [ -z "$hz" ] && [ -n "${pairs:-}" ]; then
       hz=$(awk -v p="$pairs" -v t="$DUR" 'BEGIN{printf "%.2f", p/t}')
+    fi
+    if [ -n "${hz:-}" ]; then
       st=$(awk -v h="$hz" 'BEGIN{print (h>=27)?"PASS":(h>=15)?"WARN":"FAIL"}')
       row "stereo_rate_hz[$d]" "30.0 [F1,F4]" "$hz" "$(awk -v h=$hz 'BEGIN{printf "%.2f",h/30}')" "$st"
     fi
   fi
 
   # ---- 2. IMU rate [F2]: field 200 Hz. pass>=180 warn>=100
-  if [ -f "$BLOG" ]; then
-    imun=$(grep -oE 'imu=[0-9]+' "$BLOG" | tail -1 | grep -oE '[0-9]+')
-    if [ -n "${imun:-}" ]; then
+  if [ -f "$RLOG" ] || [ -f "$BLOG" ]; then
+    hz=""
+    if [ -f "$RLOG" ]; then
+      hz=$(grep -oE 'imu [0-9.]+ Hz' "$RLOG" | tail -1 | grep -oE '[0-9.]+')
+    fi
+    imun=$(grep -oE 'imu=[0-9]+' "$BLOG" 2>/dev/null | tail -1 | grep -oE '[0-9]+')
+    if [ -z "$hz" ] && [ -n "${imun:-}" ]; then
       hz=$(awk -v p="$imun" -v t="$DUR" 'BEGIN{printf "%.1f", p/t}')
+    fi
+    if [ -n "${hz:-}" ]; then
       st=$(awk -v h="$hz" 'BEGIN{print (h>=180)?"PASS":(h>=100)?"WARN":"FAIL"}')
       row "imu_rate_hz[$d]" "200.0 [F2]" "$hz" "$(awk -v h=$hz 'BEGIN{printf "%.2f",h/200}')" "$st"
     fi
