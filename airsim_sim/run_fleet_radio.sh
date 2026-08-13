@@ -37,6 +37,11 @@ BASE=/home/lucas/hercules-sim
 NVBLOX_YAML=$BASE/src/isaac_ros_nvblox/nvblox_examples/nvblox_examples_bringup/config/nvblox/nvblox_base.yaml
 ALIGN_YAML=$BASE/src/multi_drone_nvblox/config/swarm_alignment.yaml
 RS_NODE=/home/lucas/UE5/hercules_wrapper_ws/install/airsim_ros_pkgs/lib/airsim_ros_pkgs/airsim_realsense_node
+# R2: patched cuVSLAM wrapper built from src/isaac_ros_visual_slam into the ros2_ws overlay
+# (which line 49 already sources).  HERC_VSLAM=apt selects the stock binary for an A/B.
+VSLAM_NODE=$BASE/ros2_ws/install/isaac_ros_visual_slam/lib/isaac_ros_visual_slam/isaac_ros_visual_slam
+[ "${HERC_VSLAM:-patched}" = "apt" ] && \
+  VSLAM_NODE=/opt/ros/humble/lib/isaac_ros_visual_slam/isaac_ros_visual_slam
 NAMES=(ghost delta buckshee thunderstrike)
 LABEL=radio$N
 LOG=$BASE/e1_frames
@@ -128,9 +133,15 @@ for idx in $(seq 0 $((N-1))); do
       -p depth_encoding:=$DEPTH_ENC \
       > $LOG/rsnode_${LABEL}_$VEH.log 2>&1 &
     sleep 2
-    /opt/ros/humble/lib/isaac_ros_visual_slam/isaac_ros_visual_slam --ros-args \
+    # R2 (VIO-STABILIZATION-PLAN.md §2): the patched fork, NOT the APT binary at
+    # /opt/ros/humble/lib/isaac_ros_visual_slam/isaac_ros_visual_slam.  The APT build
+    # registers every IMU sample of a batch at the image timestamp (zero-duration
+    # preintegration window, so enable_imu_fusion:=true was a no-op) and feeds the
+    # sequencer millisecond thresholds it compares against nanosecond deltas.
+    "$VSLAM_NODE" --ros-args \
       -p num_cameras:=2 -p min_num_images:=2 \
       -p enable_localization_n_mapping:=false -p enable_imu_fusion:=true \
+      -p image_jitter_threshold_ms:=200.0 -p imu_jitter_threshold_ms:=15.0 \
       -p gyro_noise_density:=0.000244 -p gyro_random_walk:=0.000019393 \
       -p accel_noise_density:=0.001862 -p accel_random_walk:=0.003 \
       -p calibration_frequency:=200.0 \

@@ -45,6 +45,19 @@ FLIGHT_Z = -1.0
 FOV = 87.0
 BASELINE = 0.05
 CAM_PITCH = math.radians(20.0)
+# R1 (VIO-STABILIZATION-PLAN.md §2): slew-rate-limit the yaw setpoint.  The planner
+# deliberately rotates in place on heading error > 45 deg and forwards an ABSOLUTE
+# YawMode target, so SimpleFlight slews at up to 256 deg/s -- maximum inter-frame
+# rotation with zero translational parallax, the one motion a rotation-only stereo
+# solution cannot survive.
+YAW_RATE_LIMIT_DEG_S = float(os.environ.get('HERC_YAW_RATE_LIMIT', '20.0'))
+# Rate-limiting the command alone is NOT sufficient -- measured: yaw p99 only 80.5 -> 65.3
+# deg/s, max unchanged at 148 deg/s (e1_frames/runs/R1).  YawMode(False, x) is an ABSOLUTE
+# target and SimpleFlight closes whatever error it is given at its own max rate, so as soon
+# as the command runs ahead of the airframe the aircraft slews at full speed regardless of
+# how slowly the command got there.  The limiter must therefore also bound the command's
+# LEAD over the actual yaw.  = rate * the 0.5 s _apply_sp period.
+YAW_MAX_LEAD_DEG = float(os.environ.get('HERC_YAW_MAX_LEAD', '10.0'))
 
 
 def qmul(a, b):
@@ -160,6 +173,9 @@ class CuvslamBridge(Node):
         self.ned = (0.0, 0.0, 0.0, 0.0)
         self.imu_count = 0
         self.stereo_count = 0
+        # R1 yaw slew limiter state
+        self._yaw_cmd = None
+        self._yaw_cmd_t = None
 
         self.create_timer(0.05, self._poll_state)
         self.create_timer(0.5, self._apply_sp)
@@ -251,11 +267,38 @@ class CuvslamBridge(Node):
         if not math.isfinite(pz):
             pz = FLIGHT_Z
         yaw_deg = math.degrees(self.sp.yaw) if math.isfinite(self.sp.yaw) else 0.0
+        # --- R1: slew-rate-limit the absolute yaw target to YAW_RATE_LIMIT_DEG_S ---
+        # HERC_YAW_RATE_LIMIT<=0 bypasses the limiter entirely, so the pre-R1 control can be
+        # re-measured on the same binary rather than by editing code between runs.
+        if YAW_RATE_LIMIT_DEG_S <= 0.0:
+            self._yaw_cmd = yaw_deg
+            self._send_sp(px, py, pz)
+            return
+        now = time.monotonic()
+        cur = math.degrees(self.ned[3])          # actual airframe yaw (NED), 20 Hz poll
+        if self._yaw_cmd is None:
+            self._yaw_cmd, self._yaw_cmd_t = cur, now
+        # dt is clamped: _apply_sp returns early whenever the setpoint is stale (>2 s), and
+        # an unclamped elapsed time would then hand the next tick an unbounded max_step,
+        # silently disabling the limiter exactly when the planner starts whipping.
+        dt = min(1.0, max(0.0, now - self._yaw_cmd_t))
+        base = self._yaw_cmd
+        lead = (base - cur + 180.0) % 360.0 - 180.0
+        if abs(lead) > YAW_MAX_LEAD_DEG:
+            base = cur + math.copysign(YAW_MAX_LEAD_DEG, lead)
+        err = (yaw_deg - base + 180.0) % 360.0 - 180.0
+        max_step = YAW_RATE_LIMIT_DEG_S * dt
+        self._yaw_cmd = base + max(-max_step, min(max_step, err))
+        self._yaw_cmd = (self._yaw_cmd + 180.0) % 360.0 - 180.0
+        self._yaw_cmd_t = now
+        self._send_sp(px, py, pz)
+
+    def _send_sp(self, px, py, pz):
         try:
             self.ctl.moveToPositionAsync(
                 px, py, pz, 1.5,
                 drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom,
-                yaw_mode=airsim.YawMode(False, yaw_deg), vehicle_name=VEH)
+                yaw_mode=airsim.YawMode(False, self._yaw_cmd), vehicle_name=VEH)
         except Exception:
             pass
 
