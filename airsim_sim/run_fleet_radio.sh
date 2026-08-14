@@ -50,6 +50,25 @@ DEPTH_ENC=${HERC_DEPTH_ENCODING:-16UC1}
 STEREO_HZ=${HERC_STEREO_HZ:-30.0}
 DEPTH_HZ=${HERC_DEPTH_HZ:-10.0}   # MUST be a float (int kills the node); nvblox update_esdf_rate_hz is 10 anyway (+24% stereo)
 IMU_HZ=${HERC_IMU_HZ:-200.0}
+# ---- environment/map selection (JapanFest port) --------------------------
+# HERC_SETTINGS   AirSim settings json (default: the Blocks 4-drone file)
+# HERC_UE_MAP     package path of the map to load, e.g. /Game/Maps/JapanFest_Street.
+#                 Empty = Blocks default (GameDefaultMap=/Game/FlyingCPP/Maps/
+#                 FlyingExampleMap, whose WorldSettings already names AirSimGameMode).
+#                 Any other map needs the GameMode supplied on the URL, because
+#                 GlobalDefaultGameMode is /Script/Blocks.BlocksGameMode (a class that
+#                 does not exist in this project) and only FlyingExampleMap's
+#                 WorldSettings carries the AirSim override.  UGameInstance::
+#                 CreateGameModeForURL gives ?game= precedence over both.
+SETTINGS=${HERC_SETTINGS:-$BASE/settings-fleet-${N}drone.json}
+[ -f "$SETTINGS" ] || { echo "settings file not found: $SETTINGS"; exit 1; }
+# fidelity_scorecard.sh (also via archive_run.sh) autodetects spawn offsets by
+# globbing settings-fleet-*.json; without this it would score a JapanFest run
+# against the Blocks spawn line and silently report wrong coverage.
+export HERC_SETTINGS="$SETTINGS"
+UE_MAP=${HERC_UE_MAP:-}
+UE_MAP_ARG=()
+[ -n "$UE_MAP" ] && UE_MAP_ARG=("${UE_MAP}?game=/Script/AirSim.AirSimGameMode")
 source /opt/ros/humble/setup.bash
 source $BASE/ros2_ws/install/setup.bash
 export ROS_LOCALHOST_ONLY=1
@@ -74,7 +93,7 @@ TEAM_BBOX=${HERC_TEAM_BBOX:-1}
 BBOX=()
 if [ "$TEAM_BBOX" = "1" ]; then
   mapfile -t BBOX < <(python3 "$BASE/investigation/vio/team_box.py" \
-      "$BASE/settings-fleet-${N}drone.json" "$ARENA_HALF" "${NAMES[@]:0:$N}")
+      "$SETTINGS" "$ARENA_HALF" "${NAMES[@]:0:$N}")
   echo "team box (own odom frame), shared by FIS and planner:"
   for idx in $(seq 0 $((N-1))); do
     echo "  ${NAMES[$idx]}: ${BBOX[$idx]}"
@@ -103,8 +122,9 @@ sleep 2
 while ss -ltn | grep -q 41451; do sleep 2; done
 cd $BASE/HERCULES/Unreal/Environments/Blocks
 /home/lucas/UE5/UE5.2.1/Engine/Binaries/Linux/UnrealEditor "$PWD/Blocks.uproject" \
+  "${UE_MAP_ARG[@]}" \
   -game -RenderOffscreen -windowed -ResX=1280 -ResY=720 \
-  -settings=$BASE/settings-fleet-${N}drone.json -log -stdout -unattended -nosplash \
+  -settings=$SETTINGS -log -stdout -unattended -nosplash \
   > $LOG/ue_$LABEL.log 2>&1 &
 cd $BASE
 for i in $(seq 1 60); do ss -ltn | grep -q 41451 && break; sleep 3; done
