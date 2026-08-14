@@ -1,0 +1,65 @@
+Panels:
+  - Class: rviz_common/Displays
+    Help Height: 0
+    Name: Displays
+    Property Tree Widget:
+      Expanded: ~
+      Splitter Ratio: 0.5
+    Tree Height: 200
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Grid
+      Cell Size: 5
+      Color: 52; 55; 70
+      Plane: XY
+      Plane Cell Count: 24
+      Line Style:
+        Line Width: 0.03
+        Value: Lines
+      Offset:
+        X: 5
+        Y: -7
+        Z: 0
+      Alpha: 0.5
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: FleetMarkers
+      Namespaces: {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /fleet_markers
+  Enabled: true
+  Global Options:
+    Background Color: 13; 14; 20
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools: []
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Current View
+      Near Clip Distance: 0.01
+      Scale: 17
+      Angle: 0
+      X: 5
+      Y: -6
+      Target Frame: <Fixed Frame>
+      Value: TopDownOrtho (rviz_default_plugins)
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: true
+  Height: 1043
+  Hide Left Dock: true
+  Hide Right Dock: true
+  Width: 1920
+  X: 0
+  Y: 0
