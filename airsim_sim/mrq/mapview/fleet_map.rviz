@@ -1,0 +1,259 @@
+Panels:
+  - Class: rviz_common/Displays
+    Help Height: 0
+    Name: Displays
+    Property Tree Widget:
+      Expanded: ~
+      Splitter Ratio: 0.5
+    Tree Height: 200
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.14
+      Cell Size: 2
+      Class: rviz_default_plugins/Grid
+      Color: 120; 128; 148
+      Enabled: true
+      Line Style:
+        Line Width: 0.03
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: -5.8
+        Y: -1.2
+        Z: -0.4
+      Plane: XY
+      Plane Cell Count: 22
+      Reference Frame: world
+      Value: true
+    - Class: nvblox_rviz_plugin/NvbloxMesh
+      Enabled: true
+      Name: GhostMesh
+      Topic:
+        Depth: 10000
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep All
+        Reliability Policy: Reliable
+        Value: /d1/mesh
+      Value: true
+    - Class: nvblox_rviz_plugin/NvbloxMesh
+      Enabled: true
+      Name: DeltaMesh
+      Topic:
+        Depth: 10000
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep All
+        Reliability Policy: Reliable
+        Value: /d2/mesh
+      Value: true
+    - Class: nvblox_rviz_plugin/NvbloxMesh
+      Enabled: true
+      Name: BucksheeMesh
+      Topic:
+        Depth: 10000
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep All
+        Reliability Policy: Reliable
+        Value: /d3/mesh
+      Value: true
+    - Class: nvblox_rviz_plugin/NvbloxMesh
+      Enabled: true
+      Name: ThunderstrikeMesh
+      Topic:
+        Depth: 10000
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep All
+        Reliability Policy: Reliable
+        Value: /d4/mesh
+      Value: true
+    - Alpha: 0.9
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 63; 140; 255
+      Enabled: true
+      Head Diameter: 0.3
+      Head Length: 0.2
+      Length: 0.3
+      Line Style: Billboards
+      Line Width: 0.07
+      Name: GhostPath
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.03
+      Shaft Diameter: 0.1
+      Shaft Length: 0.1
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /d1/path
+      Value: true
+    - Alpha: 0.9
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 63; 255; 114
+      Enabled: true
+      Line Style: Billboards
+      Line Width: 0.07
+      Name: DeltaPath
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Style: None
+      Radius: 0.03
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /d2/path
+      Value: true
+    - Alpha: 0.9
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 255; 76; 242
+      Enabled: true
+      Line Style: Billboards
+      Line Width: 0.07
+      Name: BucksheePath
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Style: None
+      Radius: 0.03
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /d3/path
+      Value: true
+    - Alpha: 0.9
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 255; 148; 30
+      Enabled: true
+      Line Style: Billboards
+      Line Width: 0.07
+      Name: ThunderstrikePath
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Style: None
+      Radius: 0.03
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /d4/path
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: GhostDrone
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /d1/drone
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: DeltaDrone
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /d2/drone
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: BucksheeDrone
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /d3/drone
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: ThunderstrikeDrone
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /d4/drone
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 9; 11; 18
+    Fixed Frame: world
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 40
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: -5.8
+        Y: -1.2
+        Z: 0
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.85
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz)
+      Yaw: 3.1416
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: true
+  Height: 1043
+  Hide Left Dock: true
+  Hide Right Dock: true
+  Width: 1920
+  X: 0
+  Y: 0
