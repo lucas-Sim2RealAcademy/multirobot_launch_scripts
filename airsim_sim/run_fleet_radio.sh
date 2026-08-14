@@ -45,10 +45,10 @@ VSLAM_NODE=$BASE/ros2_ws/install/isaac_ros_visual_slam/lib/isaac_ros_visual_slam
 NAMES=(ghost delta buckshee thunderstrike)
 LABEL=radio$N
 LOG=$BASE/e1_frames
-CAPTURE=${HERC_CAPTURE:-1}
+CAPTURE=${HERC_CAPTURE:-0}   # chase cam is not a field sensor; ground truth is decoupled (+0.5-1.2 Hz stereo)
 DEPTH_ENC=${HERC_DEPTH_ENCODING:-16UC1}
 STEREO_HZ=${HERC_STEREO_HZ:-30.0}
-DEPTH_HZ=${HERC_DEPTH_HZ:-30.0}
+DEPTH_HZ=${HERC_DEPTH_HZ:-10.0}   # MUST be a float (int kills the node); nvblox update_esdf_rate_hz is 10 anyway (+24% stereo)
 IMU_HZ=${HERC_IMU_HZ:-200.0}
 source /opt/ros/humble/setup.bash
 source $BASE/ros2_ws/install/setup.bash

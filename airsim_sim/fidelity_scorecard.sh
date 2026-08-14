@@ -54,10 +54,10 @@ row() { # metric field sim ratio status
 
 # duration of the run per drone, from first/last stamped line of the log
 span_of() {
-  grep -oE '\[1[0-9]{9}\.[0-9]+\]' "$1" 2>/dev/null | tr -d '[]' | \
+  grep -aoE '\[1[0-9]{9}\.[0-9]+\]' "$1" 2>/dev/null | tr -d '[]' | \
     awk 'NR==1{t0=$1} {t1=$1} END{ if(t0&&t1>t0) printf "%.1f", t1-t0 }'
 }
-cnt() { local c; c=$(grep -c "$1" "$2" 2>/dev/null); echo "${c:-0}"; }
+cnt() { local c; c=$(grep -ac "$1" "$2" 2>/dev/null); echo "${c:-0}"; }
 
 drones=$(ls "$LOGDIR"/rsnode_"${LABEL}"_*.log 2>/dev/null | sed -E "s/.*rsnode_${LABEL}_(.*)\.log/\1/")
 [ -z "$drones" ] && drones=$(ls "$LOGDIR"/bridge_"${LABEL}"_*.log 2>/dev/null | sed -E "s/.*bridge_${LABEL}_(.*)\.log/\1/")
@@ -78,9 +78,9 @@ for d in $drones; do
   if [ -f "$RLOG" ] || [ -f "$BLOG" ]; then
     hz=""
     if [ -f "$RLOG" ]; then
-      hz=$(grep -oE 'stereo [0-9.]+ Hz' "$RLOG" | tail -1 | grep -oE '[0-9.]+')
+      hz=$(grep -aoE 'stereo [0-9.]+ Hz' "$RLOG" | tail -1 | grep -aoE '[0-9.]+')
     fi
-    pairs=$(grep -oE 'stereo pairs=[0-9]+' "$BLOG" 2>/dev/null | tail -1 | grep -oE '[0-9]+')
+    pairs=$(grep -aoE 'stereo pairs=[0-9]+' "$BLOG" 2>/dev/null | tail -1 | grep -aoE '[0-9]+')
     if [ -z "$hz" ] && [ -n "${pairs:-}" ]; then
       hz=$(awk -v p="$pairs" -v t="$DUR" 'BEGIN{printf "%.2f", p/t}')
     fi
@@ -94,9 +94,9 @@ for d in $drones; do
   if [ -f "$RLOG" ] || [ -f "$BLOG" ]; then
     hz=""
     if [ -f "$RLOG" ]; then
-      hz=$(grep -oE 'imu [0-9.]+ Hz' "$RLOG" | tail -1 | grep -oE '[0-9.]+')
+      hz=$(grep -aoE 'imu [0-9.]+ Hz' "$RLOG" | tail -1 | grep -aoE '[0-9.]+')
     fi
-    imun=$(grep -oE 'imu=[0-9]+' "$BLOG" 2>/dev/null | tail -1 | grep -oE '[0-9]+')
+    imun=$(grep -aoE 'imu=[0-9]+' "$BLOG" 2>/dev/null | tail -1 | grep -aoE '[0-9]+')
     if [ -z "$hz" ] && [ -n "${imun:-}" ]; then
       hz=$(awk -v p="$imun" -v t="$DUR" 'BEGIN{printf "%.1f", p/t}')
     fi
@@ -140,7 +140,7 @@ EOF
 
   # ---- 5. planner cycle time [F9]: budget 10 s; healthy p95 <= 1 s
   if [ -f "$PLOG" ]; then
-    read -r p95 mx <<<"$(grep -oE 'took [0-9]+ms' "$PLOG" | grep -oE '[0-9]+' | sort -n | awk '{a[NR]=$1} END{if(NR)printf "%d %d", a[int(NR*0.95)+((NR*0.95==int(NR*0.95))?0:0)], a[NR]; else print "0 0"}')"
+    read -r p95 mx <<<"$(grep -aoE 'took [0-9]+ms' "$PLOG" | grep -aoE '[0-9]+' | sort -n | awk '{a[NR]=$1} END{if(NR)printf "%d %d", a[int(NR*0.95)+((NR*0.95==int(NR*0.95))?0:0)], a[NR]; else print "0 0"}')"
     st=$(awk -v p="$p95" -v m="$mx" 'BEGIN{print (p<=1000&&m<=10000)?"PASS":(m<=10000)?"WARN":"FAIL"}')
     row "planner_p95/max_ms[$d]" "<=1000/10000[F9]" "${p95}/${mx}" "-" "$st"
     # visited-set blackout signature (RUN-A bug #2): NO PATH burst bounded by ~60 s
@@ -150,20 +150,20 @@ EOF
 
   # ---- 6. FIS cycle [1 Hz timer; e1 field-comparable 14-48 ms on grid 401x401x61]
   if [ -f "$FLOG" ]; then
-    fmx=$(grep -oE ', [0-9.]+ ms' "$FLOG" | grep -oE '[0-9.]+' | sort -n | tail -1)
+    fmx=$(grep -aoE ', [0-9.]+ ms' "$FLOG" | grep -aoE '[0-9.]+' | sort -n | tail -1)
     st=$(awk -v v="${fmx:-0}" 'BEGIN{print (v<=500)?"PASS":(v<=1000)?"WARN":"FAIL"}')
     row "fis_max_ms[$d]" "<=500 (1Hz)" "${fmx:-0}" "-" "$st"
   fi
 
   # ---- 7. coordination cycle [F8]: banner must say 190 ms
   if [ -f "$KLOG" ]; then
-    cyc=$(grep -oE 'cycle [0-9]+ ms' "$KLOG" | head -1 | grep -oE '[0-9]+')
+    cyc=$(grep -aoE 'cycle [0-9]+ ms' "$KLOG" | head -1 | grep -aoE '[0-9]+')
     row "coord_cycle_ms[$d]" "190 [F8]" "${cyc:-none}" "-" "$([ "${cyc:-0}" = "190" ] && echo PASS || echo FAIL)"
     # radio actually attached (RUN-A gate 2): silent no-port = no 'opened LoRa serial'
-    if grep -q "opened LoRa serial" "$KLOG"; then rst=PASS; else rst="FAIL(radio dead)"; fi
-    row "lora_attached[$d]" "opened [RUN-A§5]" "$(grep -c 'opened LoRa serial' "$KLOG")" "-" "$rst"
+    if grep -aq "opened LoRa serial" "$KLOG"; then rst=PASS; else rst="FAIL(radio dead)"; fi
+    row "lora_attached[$d]" "opened [RUN-A§5]" "$(grep -ac 'opened LoRa serial' "$KLOG")" "-" "$rst"
     # peer exchange liveness (F8 test): last peers{} line must show ok>0 for all peers
-    okz=$(grep "peers {" "$KLOG" | tail -1 | grep -oE 'ok=[0-9]+' | grep -oE '[0-9]+' | awk '$1==0{z++} END{print z+0}')
+    okz=$(grep "peers {" "$KLOG" | tail -1 | grep -aoE 'ok=[0-9]+' | grep -aoE '[0-9]+' | awk '$1==0{z++} END{print z+0}')
     row "peer_exchange_dead_links[$d]" "0" "${okz:-NA}" "-" "$([ "${okz:-1}" = "0" ] && echo PASS || echo FAIL)"
   fi
 
@@ -176,7 +176,7 @@ EOF
   # ---- 9. clock sanity [F12]: log epoch must be current era in sim (field boots 1969;
   #      replicating THAT is a separate spec — here we check stamps are monotonic+sane)
   if [ -f "$PLOG" ]; then
-    ep=$(grep -oE '\[[0-9]{9,10}\.' "$PLOG" | head -1 | grep -oE '[0-9]+')
+    ep=$(grep -aoE '\[[0-9]{9,10}\.' "$PLOG" | head -1 | grep -aoE '[0-9]+')
     st=PASS; [ "${ep:-0}" -lt 1000000000 ] && st="WARN(epoch<2001: 1969-boot mode?)"
     row "clock_epoch_sane[$d]" ">1e9" "${ep:-NA}" "-" "$st"
   fi
@@ -190,7 +190,7 @@ for pxl in "$LOGDIR"/px4_${LABEL}*.log; do
   miss=$(cnt "Preflight Fail: ekf2 missing data" "$pxl")
   armed=$(cnt "Armed by" "$pxl")
   # offboard command answered with 'Landing at current position' = rejection signature
-  rej=$(grep -A2 "commander mode offboard" "$pxl" 2>/dev/null | grep -c "Landing at current position"); rej=${rej:-0}
+  rej=$(grep -A2 "commander mode offboard" "$pxl" 2>/dev/null | grep -ac "Landing at current position"); rej=${rej:-0}
   if [ "$armed" -ge 1 ] && [ "$rej" -eq 0 ] && [ "$yaw" -eq 0 ]; then st=PASS
   elif [ "$armed" -ge 1 ]; then st="FAIL(EV rejected: yaw=$yaw rej=$rej)"
   else st="FAIL(never armed: miss=$miss)"; fi
@@ -200,7 +200,7 @@ done
 # ---- 11. zenoh mesh alive (RUN-A gate 1)
 for zl in "$LOGDIR"/zenoh_${LABEL}*.log "$LOGDIR"/zenoh*_${LABEL}.log; do
   [ -f "$zl" ] || continue
-  if grep -q "panicked" "$zl"; then st="FAIL(panic)"; else st=PASS; fi
+  if grep -aq "panicked" "$zl"; then st="FAIL(panic)"; else st=PASS; fi
   row "zenoh_bridge[$(basename "$zl" .log)]" "no panic" "-" "-" "$st"
 done
 
@@ -221,7 +221,7 @@ if [ "$LIVE" = "1" ]; then
            /fmu/out/vehicle_local_position:/50:F5 /camera0/depth/image_rect_raw:/60:F4 \
            /camera0/imu:/200:F2; do
     top=${t%%:*}; ref=$(echo "$t" | cut -d: -f2 | tr -d /); src=${t##*:}
-    hz=$(timeout 12 ros2 topic hz "$top" --window 100 2>/dev/null | grep -oE 'average rate: [0-9.]+' | tail -1 | grep -oE '[0-9.]+')
+    hz=$(timeout 12 ros2 topic hz "$top" --window 100 2>/dev/null | grep -aoE 'average rate: [0-9.]+' | tail -1 | grep -aoE '[0-9.]+')
     if [ -n "${hz:-}" ]; then
       st=$(awk -v h="$hz" -v r="$ref" 'BEGIN{print (h>=0.9*r)?"PASS":(h>=0.5*r)?"WARN":"FAIL"}')
       row "live${top}" "$ref [$src]" "$hz" "$(awk -v h=$hz -v r=$ref 'BEGIN{printf "%.2f",h/r}')" "$st"

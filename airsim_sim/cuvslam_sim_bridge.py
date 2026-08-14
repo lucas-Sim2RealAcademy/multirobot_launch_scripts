@@ -370,7 +370,16 @@ def depth_loop(bridge, cli, stop_evt):
         time.sleep(0.12)
 
 
-def capture_loop(bridge, cli, stop_evt):
+def capture_loop(bridge, cli, stop_evt, images=True):
+    """Ground-truth + optional chase-cam capture.
+
+    meta_*.json is the ONLY ground truth the scorecard has, and it used to be
+    written only when images were captured -- so disabling the chase camera to
+    free AirSim renders for stereo silently blinded every metric.  The two are
+    now decoupled: images=False keeps the ground-truth series at full cadence
+    and costs zero renders (the pose comes from the 20 Hz state poll, not from
+    an image request).
+    """
     os.makedirs(OUT, exist_ok=True)
     reqs = [
         airsim.ImageRequest('chase', airsim.ImageType.Scene, False, True),
@@ -379,10 +388,11 @@ def capture_loop(bridge, cli, stop_evt):
     n = 0
     while not stop_evt.is_set():
         try:
-            resp = cli.simGetImages(reqs, vehicle_name=VEH)
-            for tag, r in zip(('chase', 'front'), resp):
-                with open(f'{OUT}/{tag}_{n:05d}.png', 'wb') as f:
-                    f.write(r.image_data_uint8)
+            if images:
+                resp = cli.simGetImages(reqs, vehicle_name=VEH)
+                for tag, r in zip(('chase', 'front'), resp):
+                    with open(f'{OUT}/{tag}_{n:05d}.png', 'wb') as f:
+                        f.write(r.image_data_uint8)
             meta = {'t': time.time(), 'state': bridge.state,
                     'log': bridge.last_log,
                     'ned': [round(v, 2) for v in bridge.ned],
@@ -422,7 +432,7 @@ def main():
     capture = os.environ.get('NB_CAPTURE', '1') == '1'
     # One RPC connection per live loop only — idle clients still occupy AirSim rpclib
     # worker-pool slots that the C++ sensor node needs when NB_SENSORS=0.
-    n_clis = (3 if SENSORS else 0) + (1 if capture else 0)
+    n_clis = (3 if SENSORS else 0) + 1   # last client = ground truth (+ images if capture)
     clis = [airsim.MultirotorClient() for _ in range(n_clis)]
     for c in clis:
         c.confirmConnection()
@@ -437,9 +447,9 @@ def main():
             threading.Thread(target=imu_loop, args=(bridge, clis[1], stop_evt), daemon=True),
             threading.Thread(target=depth_loop, args=(bridge, clis[2], stop_evt), daemon=True),
         ]
-    if capture:
-        threads.append(threading.Thread(
-            target=capture_loop, args=(bridge, clis[-1], stop_evt), daemon=True))
+    threads.append(threading.Thread(
+        target=capture_loop, args=(bridge, clis[-1], stop_evt, capture),
+        daemon=True))
     for t in threads:
         t.start()
 
