@@ -1,0 +1,298 @@
+HERCULES render-budget levers — raw measurements
+================================================
+Host: RTX 5090 / 9800X3D / 30 GB, UE 5.2.1 Cosys-AirSim Blocks, settings-fleet-4drone.json
+Tool: rpcbench2 (rpcbench.cpp + modes depth_persp/chase/capture_pair/stereo+depth_persp),
+      clang++-12 -stdlib=libc++ against /home/lucas/UE5/hercules-sim-big/HERCULES/AirLib
+      (needs -I AirLib/deps/eigen3).  "clients" = independent RPC connections = drones.
+CAVEAT: 2-3 other agents were benchmarking on this box throughout.  load1 is recorded on
+every row.  Compare rows ONLY within a block; blocks are ordered by time.
+
+BLOCK 1  (load1 9.06-11.0, my own UE on 41451, all rows within ~3 min)
+  file: full_f640.txt
+  config              C  rend/call  calls/s  renders/s   MBps  lat_p50 ms  load1
+  scene_x4            4      1        80.60     80.60    74.3     44.53    9.37
+  stereo_x4           4      2        48.96     97.92    90.2     73.84    9.96
+  stereo_depth_x4     4      3        36.17    108.52   111.1    107.02   10.06
+  depth_x4            4      1        74.29     74.29    91.3     52.83    9.66
+  chase_x4 (640x360)  4      1        89.15     89.15    61.6     38.28    9.17
+  scene_png_x4        4      1        28.60     28.60     8.7    127.32    9.32
+  stereo_png_x4       4      2        22.54     45.07    13.8    161.81   10.98
+  scene_x1            1      1         7.57      7.57     7.0    125.01    9.98
+  stereo_x1           1      2        10.40     20.81    19.2     88.55    9.75
+  stereo_depth_x1     1      3        12.50     37.49    38.4     75.79    9.54
+  scene_x2            2      1        31.12     31.12    28.7     63.67    9.06
+  stereo_depth_x2     2      3        22.03     66.09    67.7     85.77   10.07
+
+BLOCK 2  (load1 5.87-6.91, quieter, own UE on isolated port 41461)
+  file: iso_iso640.txt
+  scene_x4            4      1       109.49    109.49   100.9     31.08    6.03
+  stereo_x4           4      2        74.06    148.13   136.5     50.22    5.87
+  stereo_depth_x4     4      3        40.10    120.29   119.0     87.51    6.91
+  (later rows in that file were taken while load1 climbed 8->10; discard)
+
+BLOCK 3  (load1 11.8-12.4, heavily contended; internally consistent, absolute values low)
+  file: sweep_p640.txt
+  depth_planar_x4  640x480  4  1   50.08   50.08   61.5   82.33
+  depth_persp_x4   256x144  4  1   56.42   56.42    8.3   70.65
+  NOTE: front_center declares CaptureSettings only for ImageType 1 (DepthPlanar), so
+  requesting DepthPerspective silently returns AirSim's 256x144 default.  Accidental but
+  useful: 8.3x fewer pixels and 7.4x fewer bytes bought only +12.7% renders/s.
+
+DERIVED (Block 1, matched load)
+  per-drone cycle rate, production render mix (2 Scene + 1 DepthPlanar per cycle):
+      N=1  12.50 cycles/s     N=2  11.02 cycles/s     N=4  9.04 cycles/s
+      -> halving the fleet 4 -> 2 buys +21.9% per drone, NOT 2x.
+  batch/render decomposition (T_call = clients / calls_per_s, /clients = serialized ms of
+  renderer time; Block 1, so these absolute values carry Block 1's background load):
+      T_call: 1 render 49.63 ms | 2 renders 81.70 | 3 renders 110.59 | depth alone 53.84
+      per-batch overhead    4.39 ms
+      Scene render          8.02 ms
+      DepthPlanar render    9.07 ms standalone (1.13x a Scene render), 7.22 ms marginal
+                            when appended to an existing batch
+  production topology = 2 batches per drone-cycle ([L,R] then [D]):
+      (4.39 + 2x8.02) + (4.39 + 9.07) = 20.43 + 13.46 = 33.89 ms per drone-cycle
+      depth 30 Hz (baseline)      33.89 ms   x1.00
+      depth 15 Hz                 27.16 ms   x1.25
+      depth 10 Hz                 24.92 ms   x1.36
+      depth  5 Hz                 23.12 ms   x1.47   (below the guard's 0.2 s floor)
+      depth removed               20.43 ms   x1.66
+      depth merged into the stereo batch, 30 Hz   27.65 ms   x1.23
+      merged + only every 3rd cycle (= 10 Hz)     22.84 ms   x1.48
+  pixel elasticity -- MY TWO POINTS ARE CONFOUNDED, SEE BLOCK 4, WHICH SUPERSEDES THEM:
+      640x360 vs 640x480  (-25% px)  -> +10.6% renders/s   [chase camera: different pose
+                                        and different scene content, not a clean control]
+      256x144 vs 640x480  (-88% px)  -> +12.7% renders/s   [DepthPerspective vs DepthPlanar
+                                        is a different shader; single sample, contended]
+
+BLOCK 4  (NOT MINE -- a third agent's ladder, hb_drive.sh -> hb_640/hb_424/hb_320.txt,
+          isolated RenderBench UE on port 41455, mode=stereo (2 Scene renders/call),
+          3 samples per config reporting the MAX as the ceiling estimator.  This is a
+          better-controlled design than mine for resolution and concurrency, and it
+          overturns my elasticity reading.)
+  renders/s ceiling, BEST of 3:
+      res       n=1     n=2     n=4     n=6     n=8
+      640x480  68.28  100.51  129.32  147.68  157.13
+      424x240 140.14       -  245.05       -  317.10
+      320x240 141.23       -  247.57       -  168.15  (n=8 sample clobbered, blocksUE=2)
+  -> 424x240 is worth x1.90 at n=4 and x2.05 at n=1.  The curve SATURATES at 424x240:
+     320x240 adds +1.0%, so there is nothing below 424x240 worth taking.
+  -> per-connection renders/s at 640x480: 68.28 / 50.26 / 32.33 / 24.61 / 19.64
+     halving connections 8 -> 4 is worth x1.55 per connection (cf. my x1.22 on the
+     3-render mix); either way, well under x2.
+  CROSS-CHECK: 640x480 ceiling ~157 renders/s at n=8 (= the real 4-drone topology's
+  8 connections).  4 drones x 3 renders = 12 renders per fleet-cycle -> 13.1 Hz/drone,
+  which is exactly the 13.1-15.1 Hz the full-stack runs deliver.  The model closes.
+
+COMPRESSION (Block 1, back-to-back, matched load)
+      scene  raw 80.60 -> PNG 28.60 renders/s  (x0.35) while wire bytes fall 74.3 -> 8.7 MBps
+      stereo raw 97.92 -> PNG 45.07 renders/s  (x0.46) while wire bytes fall 90.2 -> 13.8 MBps
+
+CHASE-CAM CAPTURE (measured cadence from archived ground truth, not modelled)
+  capture ON  (HERC_CAPTURE=1): b3_base 2.95 Hz, b2_base 2.92 Hz, t3_ladder 3.00 Hz
+  capture OFF (HERC_CAPTURE=0): r1_nocap 4.54 Hz  (the loop's own 0.22 s sleep)
+  -> capture costs 2.95 x 2 = 5.9 renders/s/drone = 23.6 renders/s fleet-wide.
+  meta_*.json still written with capture off: r1_nocap = 1091 files over 4 drones, 0 PNGs.
+
+FLIGHT DYNAMICS (8188 samples, meta_*.json ned=[N,E,D,yaw] from b2_base, b3_base,
+                 t3_ladder, s7_voronoi_repeat, r1_nocap)
+  speed    median 0.03 m/s   p95 1.35   p99 1.54   max 3.68
+  yaw rate median 0.00 deg/s p95 28.17  p99 39.97  max 62.40
+  per-depth-frame motion at voxel_size 0.05 m, FOV_h 87 deg:
+    depth_hz  dx_p99_m  dx_p99_vox  dyaw_p99_deg  FOV_overlap_p99
+       30      0.051       1.03         1.33          98.5%
+       15      0.103       2.05         2.66          96.9%
+       10      0.154       3.08         4.00          95.4%
+        5      0.308       6.15         7.99          90.8%
+        3      0.513      10.26        13.32          84.7%
+
+FULL-STACK BASELINE (mined from 25 archived runs, e1_frames/runs/*, rsnode 10 s counters)
+  N=4 stereo settles at 13.1-15.1 Hz across ~20 runs; depth tracks within ~1 Hz.
+  r1_nocap (capture off) 14.85-15.10 Hz but at load1_pre 1.50 vs b3_base 13.55-13.70 Hz at
+  load1_pre 13.56 -- that pair is load-confounded, do not use it as the capture A/B.
+
+REPRODUCE
+  bench/rpcbench2  --clients N --dur S --mode {scene|stereo|depth|stereo+depth|depth_persp|
+                   chase|capture_pair|stereo+depth_persp} --compress 0|1 --port P
+  bench/motion.py     flight dynamics -> depth-rate table
+  bench/mine_runs.py, bench/mine2.py   archived-run sensor rates and FIS cells/clusters
+
+PROJECTED DELIVERED per-drone stereo Hz, from the Block 4 ceilings
+(renders per fleet-cycle = N_drones x (2 + depth_hz/stereo_hz); ceiling picked at the
+ matching connection count: 2 conns/drone)
+  N=4, 640x480, depth 30 Hz   12.00 rend/cycle   157.13/12.00 = 13.1 Hz   [observed 13.1-15.1]
+  N=4, 640x480, depth 15 Hz   10.00              157.13/10.00 = 15.7 Hz
+  N=4, 640x480, depth 10 Hz    9.33              157.13/ 9.33 = 16.8 Hz
+  N=4, 640x480, no depth       8.00              157.13/ 8.00 = 19.6 Hz
+  N=2, 640x480, depth 30 Hz    6.00              129.32/ 6.00 = 21.6 Hz
+  N=2, 640x480, depth 10 Hz    4.67              129.32/ 4.67 = 27.7 Hz
+  N=4, 424x240, depth 30 Hz   12.00              317.10/12.00 = 26.4 Hz
+  N=4, 424x240, depth 10 Hz    9.33              317.10/ 9.33 = 34.0 Hz
+  N=2, 424x240, depth 30 Hz    6.00              245.05/ 6.00 = 40.8 Hz
+Sensor-only ceilings; a live cuVSLAM+nvblox+FIS+planner stack pulls these down further,
+though the N=4/640/30 row lands inside the observed full-stack band.
+
+DEFECT FOUND (blocks anyone testing depth-rate reduction)
+  HERC_DEPTH_HZ=10 (integer) kills all four sensor nodes at startup:
+    terminate called after throwing rclcpp::exceptions::InvalidParameterTypeException
+    parameter 'depth_hz' has invalid type: parameter {depth_hz} is of type {double},
+    setting it to {integer} is not allowed
+  airsim_realsense_node.cpp declares stereo_hz/depth_hz/imu_hz as double, and
+  run_fleet_radio.sh passes HERC_* through verbatim.  Must be 10.0 / 15.0 / 5.0.
+  Symptom downstream: run_exp.sh reports PLAN_OK=0 on every drone and archives _INVALID.
+  Hit by the sibling agent's r2_depth10 and r2b_depth10 runs.
+
+DEFECT FOUND (silent, cosmetic but misleading)
+  fidelity_scorecard.sh greps rsnode/planner/fis logs without -a.  Those logs contain NUL
+  bytes, so grep prints "binary file matches" and the metric is scored 0.00 -> FAIL.
+  Seen throughout e1_frames/scorecard_fast4.txt.
+
+DEFECT FOUND (silently returns a 256x144 image)
+  settings-fleet-4drone.json declares CaptureSettings for front_center only for ImageType 1
+  (DepthPlanar).  Requesting DepthPerspective from that camera returns AirSim's 256x144
+  default, not 640x480.  Anyone implementing VIO-STABILIZATION-PLAN R11 (DepthPerspective +
+  cosine LUT) must add a CaptureSettings entry with ImageType 2 first.
+
+NOT WORKABLE (tried, documented so nobody repeats it)
+  Cloning front_left/right/center at a second resolution into the same settings file so
+  both resolutions can be A/B-ed inside one UE process does NOT work in Cosys-AirSim: the
+  clone cameras are unreachable ("camera not found" on every request) AND the clones'
+  CaptureSettings override the originals, so plain front_left came back at 424x240.
+
+================================================================================
+BLOCK 5 -- FULL-STACK PASS-THROUGH.  READ THIS BEFORE USING BLOCK 4 FOR ANYTHING.
+================================================================================
+Sibling agent's measurements, N=4, full ROS stack (cuVSLAM + nvblox + FIS + planner x4),
+delivered stereo Hz per drone from the rsnode CUMULATIVE pair counter / elapsed.
+
+  config                        load_med   per-drone stereo Hz       mean
+  640x480 cap=1 depth=30 stock   9.6-14.8  13.1 13.2 13.8            13.4
+  640x480 cap=0 depth=30         6.5       14.3                      14.3
+  640x480 cap=0 depth=10.0 (r5)  8.9       17.6 17.6 17.8 17.8       17.7
+  424x240 cap=0 depth=10.0 (r6)  8.8       16.2 16.4 17.0 17.5       16.8
+  424x240 cap=0 depth=10.0 (r7) 11.0       18.1 18.4 19.0 19.0       18.6
+
+*** 424x240 delivers +0.0% (mean 17.7 vs 17.7), against +90% on the Block 4 render ladder.
+*** At MATCHED load the cut is if anything negative: r6 (load 8.8) 16.8 vs r5 (load 8.9) 17.7.
+*** r7 scoring HIGHER at load 11.0 than r6 at 8.8 is anomalous -- load_med is not capturing
+    the contention that matters, so treat single-run deltas under ~10% as noise.
+cuVSLAM tracked fine at 424x240 (max|err| 1.5 m, none above 2 m): the cut is INERT, not harmful.
+
+*** DEPTH NEVER REACHED ITS SETPOINT.  Any arithmetic using depth_hz=30 is wrong, including
+*** two figures I published earlier and have corrected below.  DELIVERED depth, per drone:
+  run              cfg                     stereo  depth   st_r/s  dp_r/s  cap   TOTAL
+  b2_base          cap=1 depth_sp=30        13.1    13.8    104.8   55.2  23.6   183.6
+  b3_base          cap=1 depth_sp=30        13.2    14.0    105.6   56.0  23.6   185.2
+  t1_ladder        cap=1 depth_sp=30        13.8    14.8    110.4   59.2  23.6   193.2
+  r1_nocap         cap=0 depth_sp=30        14.3    14.6    114.4   58.4   0.0   172.8
+  r5               cap=0 depth_sp=10        17.7     9.4    141.6   37.6   0.0   179.2
+  r6  424x240      cap=0 depth_sp=10        16.8     8.5    134.4   34.0   0.0   168.4
+  r7  424x240      cap=0 depth_sp=10        18.6     9.5    148.8   38.0   0.0   186.8
+  At setpoint 30 the depth stream delivered only ~14-15 Hz: it was starved too.  Delivered
+  depth therefore ran at roughly the STEREO rate, ~1 depth render per stereo cycle.
+
+NOISE FLOOR: +/-11% run to run.  r6 and r7 are the SAME configuration and differ by 11.0%
+  (mean 16.77 vs 18.62).  Nothing smaller than that is a result.  Applies to everything below.
+
+MY "THE MODEL CLOSES" CROSS-CHECK: still don't trust it, but my RETRACTION overstated it.
+  I first claimed 157.13/12 = 13.1 Hz "exactly" matched the observed 13.1-13.8.
+  I then retracted that using depth=30, getting 18.7 renders/fleet-cycle -> 8.4 Hz, and
+  said the model under-predicts by 60%.  That retraction ALSO used the setpoint.
+  With delivered depth: 2*13.1 + 13.8 + 5.9 = 45.9 renders/drone/s = 3.50 per stereo cycle,
+  fleet-cycle 14.0 -> 157.13/14.0 = 11.2 Hz vs observed 13.1.  Under-predicts by 14%.
+  So my original "3 renders per drone-cycle" was nearly right after all.
+  It still is NOT evidence of a render-bound regime -- see the discriminator below.  An
+  agreement between a render-ceiling model and the observed rate proves nothing here.
+
+THE BLOCK 4 CEILINGS ARE NOT ABSOLUTE CEILINGS (weaker than I first said, but still true).
+  Full-stack totals reach 172.8-193.2 renders/s against the isolated best-of-3 "ceiling"
+  of 157.13, i.e. 1.10-1.23x above it.  (I earlier claimed 250.6 = 1.59x; that used the
+  30 Hz setpoint and is withdrawn.)  1.10x is inside the noise floor; 1.23x is not.  The
+  ladder ran against background load 9.5-10.5, so its absolute numbers are depressed.
+  Block 4 stays valid for RELATIVE resolution/concurrency comparison (both arms equally
+  contended) and must not be used as an absolute budget.
+
+WITHDRAWN: my "34% conversion efficiency" figure.  It divided by 80 renders/s of freed
+  capacity computed from the SETPOINT.  Recomputed on delivered depth the freed capacity
+  is (14.6-9.4)*4 = 20.8 r/s against 27.2 r/s absorbed, i.e. 131%.
+  DO NOT PUBLISH 131% EITHER.  It is a ratio of two small differences, each built from
+  rates carrying ~11% run-to-run error; its error bars span roughly 50-250%, and the
+  underlying total moved only 172.8 -> 179.2 (+3.7%), well inside noise.  The whole
+  "conversion against a render budget" frame should be dropped for both levers.
+
+THE ACTUAL DISCRIMINATOR IS THE RESOLUTION A/B, NOT THE DEPTH ARITHMETIC.
+  The depth numbers cannot separate "fixed render budget reallocated at ~100%" from
+  "throughput elastic in round-trips" -- both predict what was seen, within noise.
+  The resolution A/B separates them cleanly: making every render ~1.9x cheaper enlarges a
+  render budget but does nothing to round-trips.  Delivered stereo went 17.7 -> 16.8 at
+  matched load (r5 8.9 vs r6 8.8) and total throughput 179.2 -> 168.4.  No gain, slightly
+  negative.  Therefore render time was never the scarce resource.
+  Why depth 30->10 helped anyway: it deletes ~5 blocking RPC round-trips/s/drone
+  (14.6 -> 9.4 Hz) plus the matching nvblox integration CPU.  It is a round-trip lever
+  that was mislabelled as a render lever, which is exactly why resolution -- a pure
+  render lever -- returned nothing.
+
+BINDING CONSTRAINT: RPC round-trip + CPU/GPU contention with the consumer stack.
+  airsim_realsense_node.cpp:11 documents ~30 ms per blocking simGetImages call = ~33 Hz
+  per connection before contention.  At 17.7 Hz the stereo connection is at 56.5 ms,
+  i.e. ~26 ms of contention on top of the floor.
+
+WHY THE RESOLUTION NULL IS TRUSTWORTHY WHILE THE DEPTH RATIO IS NOT
+  Both rest on the same sloppy per-run numbers, so the difference is effect size vs noise:
+    ladder predicted 17.7 x 1.90 = 33.6 Hz for 424x240
+    best SINGLE 424 observation   18.6 Hz  -> 44.7% below prediction = 4.3x the noise floor
+  A null that misses its prediction by 4x the noise survives noisy inputs.  A ratio of two
+  small differences (the 131%) does not: propagating +/-10.5% through all four underlying
+  rates puts it anywhere from 1% to 501%.  One clean experiment beats three noisy ones
+  chained into a ratio.  Both agents independently built a headline on such a ratio today.
+
+OUTCOME (sibling agent, closing the loop -- the reason any of this mattered)
+  The 25 Hz "gate" was a false premise: a nominal 30 Hz frame period that hardened into a
+  numeric target.  The real criteria are image_jitter_threshold_ms:=200.0
+  (run_fleet_radio.sh:176) and a field reference of <=2 cuVSLAM stutters/min.  At
+  17.7-18.7 Hz all four drones sit at 0-4 stutters/min, so VIO was never starved at the
+  stock defaults and the rate work was never on the critical path for tracking quality.
+  THE WIN WAS EXPLORATION, NOT VIO.  HERC_CAPTURE=0 + HERC_DEPTH_HZ=10.0 took the stock
+  fleet from ~460 to 547 mean unique m2 (+19%), best run 607/630 = 96% arena coverage at
+  excess 2.6 -- the first PASS in this archive.
+  LADDER A/B RE-RUN at the corrected operating point, n=3 per arm interleaved: REGRESSED.
+  unique 547 -> 409 (-25%), excess 9.9 -> 30.8 (+211%), consistent across all three pairs,
+  constraint verifiably enforced (min goal 1.0-1.1 m vs 0.2-0.4 m) and the planner never
+  starved (NO PATH 1-3, dead-zone fallback fired zero times).  So the deadband is real but
+  suppressing it costs more than it saves -- the nearest-frontier micro-hop was doing useful
+  work.  Reverted, nothing stacked.  Config restored to 640x480 on all four vehicles.
+
+RETRACTED: the host-side stereo-matcher idea (drop the depth render, "x1.5").
+  It was sized on the render budget, and the render budget is not binding.  It would free
+  a resource that is not scarce while ADDING GPU contention to the resource that is.
+  Expected effect on delivered stereo Hz is neutral-to-negative.  Do not build it on my
+  earlier reasoning.
+
+UNTESTED HYPOTHESIS, offered as the one thing the mechanism actually points at:
+  connection parallelism, not cheaper renders.  Block 1 showed strongly superlinear
+  scaling in connection count (scene: 7.57 renders/s at n=1 -> 80.60 at n=4), i.e. the
+  renderer overlaps work across connections that it cannot overlap within one blocking
+  call.  The stereo pair is currently TWO renders inside ONE blocking simGetImages.
+  Splitting left/right onto two connections (8 -> 12 connections fleet-wide) would let
+  them overlap.  Nobody has measured this.  Given that two "obvious" render levers have
+  already behaved contrary to prediction here, measure it before believing it.
+  WHY IT IS THE RIGHT NEXT EXPERIMENT, beyond being the only live thread: it is cheap to
+  test AND cheap to be wrong about.  It changes how many simGetImages calls the stereo loop
+  issues, not what gets rendered -- so it costs no fidelity, needs no settings change, and
+  reverts by editing one loop.  Both levers burned today required either a fidelity trade
+  (resolution) or a planner change (ladder) merely to EVALUATE.  Instrument the ROUND-TRIP
+  count, not the render count: that is the resource the evidence says is scarce.
+
+MEASURING ANYTHING ON THIS HOST -- READ BEFORE TRUSTING A SINGLE NUMBER ABOVE
+  Nearly every figure in this file was distorted at some point by another agent
+  benchmarking on the same box, and both agents involved threw away runs to discover it.
+  Observed swing from contention alone, same config: 17.7 Hz at load1 8.9, 10.7 at 11.8,
+  6.2 at 16.4 -- a 2.9x range, larger than every render lever in this file COMBINED.
+  The +/-11% noise floor quoted above assumes the host stays roughly as loaded as it was
+  during these runs.  Without either single-tenancy or an enforced lock discipline it
+  quietly becomes +/-100%, and every conclusion here becomes unfalsifiable.
+  Minimum practice: record load1 on EVERY row (all tables above do), compare only within
+  a matched-load block, interleave A/B arms rather than running them in sequence, and take
+  replicates of the SAME config to establish the noise floor before believing any delta.
+  A .HOST_LOCK convention was used during this work but nothing enforced it -- three agents
+  ran concurrently anyway, two of them under process names deliberately chosen so that
+  pkill -f "UnrealEditor.*Blocks" would not match them.
