@@ -1,0 +1,102 @@
+{
+ "summary": {
+  "label": "MOON_OVERVIEW",
+  "n_poses": 8,
+  "st_min": 2000,
+  "st_med": 2000,
+  "st_max": 2000,
+  "grnd_min": 938,
+  "grnd_med": 968,
+  "grnd_max": 1010
+ },
+ "per_pose": [
+  {
+   "pose": "q0_anchor",
+   "st": 2000,
+   "fast": 0,
+   "cells": 48,
+   "lk": 0,
+   "meddisp": 0.0,
+   "usable_gt2px": 0.0,
+   "grnd": 981,
+   "grndZ": 14704.0
+  },
+  {
+   "pose": "q1_e",
+   "st": 2000,
+   "fast": 0,
+   "cells": 48,
+   "lk": 3,
+   "meddisp": 50.733890533447266,
+   "usable_gt2px": 100.0,
+   "grnd": 948,
+   "grndZ": 14704.0
+  },
+  {
+   "pose": "q2_n",
+   "st": 2000,
+   "fast": 0,
+   "cells": 48,
+   "lk": 2,
+   "meddisp": 80.33531188964844,
+   "usable_gt2px": 100.0,
+   "grnd": 960,
+   "grndZ": 14728.0
+  },
+  {
+   "pose": "q3_w",
+   "st": 2000,
+   "fast": 0,
+   "cells": 48,
+   "lk": 2,
+   "meddisp": 23.197154998779297,
+   "usable_gt2px": 100.0,
+   "grnd": 1010,
+   "grndZ": 14728.0
+  },
+  {
+   "pose": "q4_s",
+   "st": 2000,
+   "fast": 0,
+   "cells": 48,
+   "lk": 0,
+   "meddisp": 0.0,
+   "usable_gt2px": 0.0,
+   "grnd": 994,
+   "grndZ": 14712.0
+  },
+  {
+   "pose": "q5_hi",
+   "st": 2000,
+   "fast": 0,
+   "cells": 48,
+   "lk": 1,
+   "meddisp": 29.40557861328125,
+   "usable_gt2px": 100.0,
+   "grnd": 938,
+   "grndZ": 14712.0
+  },
+  {
+   "pose": "q6_lo",
+   "st": 2000,
+   "fast": 0,
+   "cells": 48,
+   "lk": 0,
+   "meddisp": 0.0,
+   "usable_gt2px": 0.0,
+   "grnd": 968,
+   "grndZ": 14720.0
+  },
+  {
+   "pose": "q7_spawn",
+   "st": 2000,
+   "fast": 0,
+   "cells": 48,
+   "lk": 0,
+   "meddisp": 0.0,
+   "usable_gt2px": 0.0,
+   "grnd": 962,
+   "grndZ": 14704.0
+  }
+ ]
+}

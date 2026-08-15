@@ -50,6 +50,8 @@ DEPTH_ENC=${HERC_DEPTH_ENCODING:-16UC1}
 STEREO_HZ=${HERC_STEREO_HZ:-30.0}
 DEPTH_HZ=${HERC_DEPTH_HZ:-10.0}   # MUST be a float (int kills the node); nvblox update_esdf_rate_hz is 10 anyway (+24% stereo)
 IMU_HZ=${HERC_IMU_HZ:-200.0}
+FLIGHT_HEIGHT=${HERC_FLIGHT_HEIGHT:-1.0}   # m AGL commanded everywhere (FIS band, planner z, bridge takeoff)
+export HERC_FLIGHT_HEIGHT=$FLIGHT_HEIGHT
 # ---- environment/map selection (JapanFest port) --------------------------
 # HERC_SETTINGS   AirSim settings json (default: the Blocks 4-drone file)
 # HERC_UE_MAP     package path of the map to load, e.g. /Game/Maps/JapanFest_Street.
@@ -90,6 +92,17 @@ mkdir -p $LOG
 # for an A/B without editing this file.
 ARENA_HALF=${HERC_ARENA_HALF_M:-10.0}
 TEAM_BBOX=${HERC_TEAM_BBOX:-1}
+# ---- relaxed-clearance knob (sim cinematic runs; defaults stay stock) ----
+# HERC_COLLISION_THRESH / HERC_GOAL_THRESH override the planner's A* clearance
+# gates (stock 1.5 / 1.0 m).  JapanFest's market street has a ~1 m tall free
+# tube (clutter tops 0.6-1.1 m AGL, banner bottoms 1.9-2.1 m) so the stock
+# thresholds wall the fleet at the first well-integrated banner row even
+# though the tube is physically flyable at 1.78 m AGL.
+PLN_THRESH_ARGS=()
+[ -n "${HERC_COLLISION_THRESH:-}" ] && \
+  PLN_THRESH_ARGS+=(-p collision_threshold:=$HERC_COLLISION_THRESH)
+[ -n "${HERC_GOAL_THRESH:-}" ] && \
+  PLN_THRESH_ARGS+=(-p goal_threshold:=$HERC_GOAL_THRESH)
 BBOX=()
 if [ "$TEAM_BBOX" = "1" ]; then
   mapfile -t BBOX < <(python3 "$BASE/investigation/vio/team_box.py" \
@@ -219,7 +232,8 @@ for idx in $(seq 0 $((N-1))); do
       -r camera_0/depth/image:=/sim/depth/image \
       -r camera_0/depth/camera_info:=/sim/depth/camera_info \
       > $LOG/nvblox_${LABEL}_$VEH.log 2>&1 &
-    ros2 launch active_exploration fis.launch.py flight_height:=1.0 \
+    ros2 launch active_exploration fis.launch.py flight_height:=$FLIGHT_HEIGHT \
+      geofence_margin:=${HERC_FIS_GEOFENCE_MARGIN:-1.4} \
       "${FIS_BBOX_ARGS[@]}" \
       > $LOG/fis_${LABEL}_$VEH.log 2>&1 &
     # REAL coordination stage + REAL radiohive bridge on the virtual radio
@@ -230,8 +244,8 @@ for idx in $(seq 0 $((N-1))); do
       namespace:=d$DOM serial_port:=/tmp/hercules_lora/drone$DOM \
       > $LOG/lorabridge_${LABEL}_$VEH.log 2>&1 &
     python3 $BASE/src/active_exploration/scripts/simple_exploration_planner.py \
-      --ros-args -p debug_skip_arm_check:=true -p flight_height:=1.0 -p vehicle_id:=$DOM \
-      "${PLN_BBOX_ARGS[@]}" \
+      --ros-args -p debug_skip_arm_check:=true -p flight_height:=$FLIGHT_HEIGHT -p vehicle_id:=$DOM \
+      "${PLN_BBOX_ARGS[@]}" "${PLN_THRESH_ARGS[@]}" \
       > $LOG/planner_${LABEL}_$VEH.log 2>&1 &
     CAP=$CAPTURE   # capture every drone (2x2 grid video)
     # NB_SENSORS=0: flight + PX4 stub + chase capture only, sensors owned by the C++ node.

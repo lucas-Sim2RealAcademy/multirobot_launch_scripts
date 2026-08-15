@@ -1,0 +1,822 @@
+[
+ {
+  "voxel_dims": [
+   64,
+   16,
+   64
+  ],
+  "nx_ny_nz": [
+   64,
+   64,
+   16
+  ],
+  "occupied": 15642,
+  "occupied_pct": 23.9,
+  "layer_occupancy": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4096,
+   4096,
+   4096,
+   506,
+   506,
+   506,
+   459,
+   459,
+   459,
+   459
+  ],
+  "k_spawn": 8,
+  "spawn_alt_m": -0.71,
+  "layer_alt_m": [
+   -8.21,
+   -7.21,
+   -6.21,
+   -5.21,
+   -4.21,
+   -3.21,
+   -2.21,
+   -1.21,
+   -0.21,
+   0.79,
+   1.79,
+   2.79,
+   3.79,
+   4.79,
+   5.79,
+   6.79
+  ],
+  "cells_flyable": 3637,
+  "cells_grid_total": 4096,
+  "clearance_m_p5_p50_p95": [
+   7,
+   7,
+   7
+  ],
+  "largest_flyable_box_m": [
+   62.0,
+   38.0
+  ],
+  "largest_flyable_box_area_m2": 2356.0,
+  "largest_flyable_box_min_side_m": 38.0,
+  "largest_flyable_box_origin_ned_m": [
+   -32.0,
+   -27.5
+  ],
+  "largest_flyable_square_m": 38.0,
+  "fits_25x25": true,
+  "arena_cells_tested": 580,
+  "arena_cells_flyable": 574,
+  "arena_flyable_pct": 99.0,
+  "spawn_line_flyable": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits_4x3m": true,
+  "label": "BLOCKS"
+ },
+ {
+  "voxel_dims": [
+   64,
+   16,
+   64
+  ],
+  "nx_ny_nz": [
+   64,
+   64,
+   16
+  ],
+  "occupied": 15642,
+  "occupied_pct": 23.9,
+  "layer_occupancy": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4096,
+   4096,
+   4096,
+   506,
+   506,
+   506,
+   459,
+   459,
+   459,
+   459
+  ],
+  "k_spawn": 8,
+  "spawn_alt_m": -0.71,
+  "layer_alt_m": [
+   -8.21,
+   -7.21,
+   -6.21,
+   -5.21,
+   -4.21,
+   -3.21,
+   -2.21,
+   -1.21,
+   -0.21,
+   0.79,
+   1.79,
+   2.79,
+   3.79,
+   4.79,
+   5.79,
+   6.79
+  ],
+  "cells_flyable": 3637,
+  "cells_grid_total": 4096,
+  "clearance_m_p5_p50_p95": [
+   7,
+   7,
+   7
+  ],
+  "largest_flyable_box_m": [
+   62.0,
+   38.0
+  ],
+  "largest_flyable_box_area_m2": 2356.0,
+  "largest_flyable_box_min_side_m": 38.0,
+  "largest_flyable_box_origin_ned_m": [
+   -32.0,
+   -27.5
+  ],
+  "largest_flyable_square_m": 38.0,
+  "fits_25x25": true,
+  "arena_cells_tested": 580,
+  "arena_cells_flyable": 574,
+  "arena_flyable_pct": 99.0,
+  "spawn_line_flyable": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits_4x3m": true,
+  "label": "BLOCKS2"
+ },
+ {
+  "voxel_dims": [
+   64,
+   16,
+   64
+  ],
+  "nx_ny_nz": [
+   64,
+   64,
+   16
+  ],
+  "occupied": 11573,
+  "occupied_pct": 17.7,
+  "layer_occupancy": [
+   0,
+   0,
+   0,
+   0,
+   2,
+   3,
+   179,
+   2359,
+   4096,
+   1087,
+   791,
+   636,
+   629,
+   584,
+   555,
+   652
+  ],
+  "k_spawn": 8,
+  "spawn_alt_m": -0.7,
+  "layer_alt_m": [
+   -8.2,
+   -7.2,
+   -6.2,
+   -5.2,
+   -4.2,
+   -3.2,
+   -2.2,
+   -1.2,
+   -0.2,
+   0.8,
+   1.8,
+   2.8,
+   3.8,
+   4.8,
+   5.8,
+   6.8
+  ],
+  "cells_flyable": 3518,
+  "cells_grid_total": 4096,
+  "clearance_m_p5_p50_p95": [
+   5,
+   7,
+   7
+  ],
+  "largest_flyable_box_m": [
+   64.0,
+   17.0
+  ],
+  "largest_flyable_box_area_m2": 1088.0,
+  "largest_flyable_box_min_side_m": 17.0,
+  "largest_flyable_box_origin_ned_m": [
+   -32.0,
+   15.5
+  ],
+  "largest_flyable_square_m": 22.0,
+  "fits_25x25": false,
+  "arena_cells_tested": 580,
+  "arena_cells_flyable": 473,
+  "arena_flyable_pct": 81.6,
+  "spawn_line_flyable": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits_4x3m": true,
+  "label": "DEMONSTRATION"
+ },
+ {
+  "voxel_dims": [
+   64,
+   16,
+   64
+  ],
+  "nx_ny_nz": [
+   64,
+   64,
+   16
+  ],
+  "occupied": 7393,
+  "occupied_pct": 11.3,
+  "layer_occupancy": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3,
+   4096,
+   1009,
+   678,
+   335,
+   343,
+   338,
+   294,
+   297
+  ],
+  "k_spawn": 8,
+  "spawn_alt_m": -0.72,
+  "layer_alt_m": [
+   -8.22,
+   -7.22,
+   -6.22,
+   -5.22,
+   -4.22,
+   -3.22,
+   -2.22,
+   -1.22,
+   -0.22,
+   0.78,
+   1.78,
+   2.78,
+   3.78,
+   4.78,
+   5.78,
+   6.78
+  ],
+  "cells_flyable": 3782,
+  "cells_grid_total": 4096,
+  "clearance_m_p5_p50_p95": [
+   5,
+   7,
+   7
+  ],
+  "largest_flyable_box_m": [
+   35.0,
+   27.0
+  ],
+  "largest_flyable_box_area_m2": 945.0,
+  "largest_flyable_box_min_side_m": 27.0,
+  "largest_flyable_box_origin_ned_m": [
+   -3.0,
+   -13.5
+  ],
+  "largest_flyable_square_m": 27.0,
+  "fits_25x25": true,
+  "arena_cells_tested": 580,
+  "arena_cells_flyable": 487,
+  "arena_flyable_pct": 84.0,
+  "spawn_line_flyable": [
+   true,
+   false,
+   false,
+   true
+  ],
+  "spawn_line_fits_4x3m": false,
+  "label": "GO2_OVERVIEW"
+ },
+ {
+  "voxel_dims": [
+   64,
+   16,
+   64
+  ],
+  "nx_ny_nz": [
+   64,
+   64,
+   16
+  ],
+  "occupied": 3409,
+  "occupied_pct": 5.2,
+  "layer_occupancy": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2915,
+   152,
+   103,
+   127,
+   112,
+   0,
+   0,
+   0
+  ],
+  "k_spawn": 8,
+  "spawn_alt_m": -0.05,
+  "layer_alt_m": [
+   -7.55,
+   -6.55,
+   -5.55,
+   -4.55,
+   -3.55,
+   -2.55,
+   -1.55,
+   -0.55,
+   0.45,
+   1.45,
+   2.45,
+   3.45,
+   4.45,
+   5.45,
+   6.45,
+   7.45
+  ],
+  "cells_flyable": 2915,
+  "cells_grid_total": 4096,
+  "clearance_m_p5_p50_p95": [
+   5,
+   7,
+   7
+  ],
+  "largest_flyable_box_m": [
+   55.0,
+   53.0
+  ],
+  "largest_flyable_box_area_m2": 2915.0,
+  "largest_flyable_box_min_side_m": 53.0,
+  "largest_flyable_box_origin_ned_m": [
+   -32.0,
+   -16.5
+  ],
+  "largest_flyable_square_m": 53.0,
+  "fits_25x25": true,
+  "arena_cells_tested": 580,
+  "arena_cells_flyable": 580,
+  "arena_flyable_pct": 100.0,
+  "spawn_line_flyable": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits_4x3m": true,
+  "label": "HI_OVERVIEW"
+ },
+ {
+  "voxel_dims": [
+   64,
+   16,
+   64
+  ],
+  "nx_ny_nz": [
+   64,
+   64,
+   16
+  ],
+  "occupied": 24,
+  "occupied_pct": 0.0,
+  "layer_occupancy": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   24,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "k_spawn": 8,
+  "spawn_alt_m": -69.62,
+  "layer_alt_m": [
+   -77.12,
+   -76.12,
+   -75.12,
+   -74.12,
+   -73.12,
+   -72.12,
+   -71.12,
+   -70.12,
+   -69.12,
+   -68.12,
+   -67.12,
+   -66.12,
+   -65.12,
+   -64.12,
+   -63.12,
+   -62.12
+  ],
+  "cells_flyable": 24,
+  "cells_grid_total": 4096,
+  "clearance_m_p5_p50_p95": [
+   7,
+   7,
+   7
+  ],
+  "largest_flyable_box_m": [
+   2.0,
+   3.0
+  ],
+  "largest_flyable_box_area_m2": 6.0,
+  "largest_flyable_box_min_side_m": 2.0,
+  "largest_flyable_box_origin_ned_m": [
+   -12.0,
+   -3.5
+  ],
+  "largest_flyable_square_m": 2.0,
+  "fits_25x25": false,
+  "arena_cells_tested": 580,
+  "arena_cells_flyable": 24,
+  "arena_flyable_pct": 4.1,
+  "spawn_line_flyable": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "spawn_line_fits_4x3m": false,
+  "label": "HOME_INTERIOR"
+ },
+ {
+  "voxel_dims": [
+   64,
+   16,
+   64
+  ],
+  "nx_ny_nz": [
+   64,
+   64,
+   16
+  ],
+  "occupied": 13229,
+  "occupied_pct": 20.2,
+  "layer_occupancy": [
+   393,
+   393,
+   393,
+   393,
+   405,
+   408,
+   421,
+   1845,
+   1112,
+   1004,
+   981,
+   1053,
+   1144,
+   855,
+   1096,
+   1333
+  ],
+  "k_spawn": 8,
+  "spawn_alt_m": -0.03,
+  "layer_alt_m": [
+   -7.53,
+   -6.53,
+   -5.53,
+   -4.53,
+   -3.53,
+   -2.53,
+   -1.53,
+   -0.53,
+   0.47,
+   1.47,
+   2.47,
+   3.47,
+   4.47,
+   5.47,
+   6.47,
+   7.47
+  ],
+  "cells_flyable": 1002,
+  "cells_grid_total": 4096,
+  "clearance_m_p5_p50_p95": [
+   3,
+   7,
+   8
+  ],
+  "largest_flyable_box_m": [
+   5.0,
+   29.0
+  ],
+  "largest_flyable_box_area_m2": 145.0,
+  "largest_flyable_box_min_side_m": 5.0,
+  "largest_flyable_box_origin_ned_m": [
+   7.0,
+   -27.6
+  ],
+  "largest_flyable_square_m": 9.0,
+  "fits_25x25": false,
+  "arena_cells_tested": 580,
+  "arena_cells_flyable": 341,
+  "arena_flyable_pct": 58.8,
+  "spawn_line_flyable": [
+   false,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits_4x3m": false,
+  "label": "JAPANFEST"
+ },
+ {
+  "voxel_dims": [
+   64,
+   16,
+   64
+  ],
+  "nx_ny_nz": [
+   64,
+   64,
+   16
+  ],
+  "occupied": 5206,
+  "occupied_pct": 7.9,
+  "layer_occupancy": [
+   0,
+   0,
+   0,
+   0,
+   27,
+   266,
+   455,
+   661,
+   1176,
+   1072,
+   751,
+   488,
+   151,
+   124,
+   35,
+   0
+  ],
+  "k_spawn": 8,
+  "spawn_alt_m": -0.65,
+  "layer_alt_m": [
+   -8.15,
+   -7.15,
+   -6.15,
+   -5.15,
+   -4.15,
+   -3.15,
+   -2.15,
+   -1.15,
+   -0.15,
+   0.85,
+   1.85,
+   2.85,
+   3.85,
+   4.85,
+   5.85,
+   6.85
+  ],
+  "cells_flyable": 3964,
+  "cells_grid_total": 4096,
+  "clearance_m_p5_p50_p95": [
+   4,
+   6,
+   10
+  ],
+  "largest_flyable_box_m": [
+   54.0,
+   63.0
+  ],
+  "largest_flyable_box_area_m2": 3402.0,
+  "largest_flyable_box_min_side_m": 54.0,
+  "largest_flyable_box_origin_ned_m": [
+   -32.0,
+   -27.5
+  ],
+  "largest_flyable_square_m": 54.0,
+  "fits_25x25": true,
+  "arena_cells_tested": 580,
+  "arena_cells_flyable": 580,
+  "arena_flyable_pct": 100.0,
+  "spawn_line_flyable": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits_4x3m": true,
+  "label": "MOON_DEMO"
+ },
+ {
+  "voxel_dims": [
+   64,
+   16,
+   64
+  ],
+  "nx_ny_nz": [
+   64,
+   64,
+   16
+  ],
+  "occupied": 12,
+  "occupied_pct": 0.0,
+  "layer_occupancy": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   12,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "k_spawn": 8,
+  "spawn_alt_m": -62.48,
+  "layer_alt_m": [
+   -69.98,
+   -68.98,
+   -67.98,
+   -66.98,
+   -65.98,
+   -64.98,
+   -63.98,
+   -62.98,
+   -61.98,
+   -60.98,
+   -59.98,
+   -58.98,
+   -57.98,
+   -56.98,
+   -55.98,
+   -54.98
+  ],
+  "cells_flyable": 12,
+  "cells_grid_total": 4096,
+  "clearance_m_p5_p50_p95": [
+   7,
+   7,
+   7
+  ],
+  "largest_flyable_box_m": [
+   2.0,
+   3.0
+  ],
+  "largest_flyable_box_area_m2": 6.0,
+  "largest_flyable_box_min_side_m": 2.0,
+  "largest_flyable_box_origin_ned_m": [
+   -12.0,
+   -3.5
+  ],
+  "largest_flyable_square_m": 2.0,
+  "fits_25x25": false,
+  "arena_cells_tested": 580,
+  "arena_cells_flyable": 12,
+  "arena_flyable_pct": 2.1,
+  "spawn_line_flyable": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "spawn_line_fits_4x3m": false,
+  "label": "MOON_OVERVIEW"
+ },
+ {
+  "voxel_dims": [
+   64,
+   16,
+   64
+  ],
+  "nx_ny_nz": [
+   64,
+   64,
+   16
+  ],
+  "occupied": 24,
+  "occupied_pct": 0.0,
+  "layer_occupancy": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   24,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "k_spawn": 8,
+  "spawn_alt_m": -62.97,
+  "layer_alt_m": [
+   -70.47,
+   -69.47,
+   -68.47,
+   -67.47,
+   -66.47,
+   -65.47,
+   -64.47,
+   -63.47,
+   -62.47,
+   -61.47,
+   -60.47,
+   -59.47,
+   -58.47,
+   -57.47,
+   -56.47,
+   -55.47
+  ],
+  "cells_flyable": 24,
+  "cells_grid_total": 4096,
+  "clearance_m_p5_p50_p95": [
+   7,
+   7,
+   7
+  ],
+  "largest_flyable_box_m": [
+   2.0,
+   3.0
+  ],
+  "largest_flyable_box_area_m2": 6.0,
+  "largest_flyable_box_min_side_m": 2.0,
+  "largest_flyable_box_origin_ned_m": [
+   -12.0,
+   -3.5
+  ],
+  "largest_flyable_square_m": 2.0,
+  "fits_25x25": false,
+  "arena_cells_tested": 580,
+  "arena_cells_flyable": 24,
+  "arena_flyable_pct": 4.1,
+  "spawn_line_flyable": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "spawn_line_fits_4x3m": false,
+  "label": "TECHART"
+ }
+]

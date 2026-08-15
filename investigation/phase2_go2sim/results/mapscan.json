@@ -1,0 +1,704 @@
+[
+ {
+  "map": "/Game/Maps/Overview",
+  "actors_total": 1167,
+  "colliding_actors": 1147,
+  "static_mesh_components": 1071,
+  "material_slots": 1430,
+  "ism_instances": 0,
+  "light_components": 1,
+  "skeletal_components": 11,
+  "landscape_actors": 0,
+  "top_classes": [
+   [
+    "StaticMeshActor",
+    1070
+   ],
+   [
+    "DecalActor",
+    61
+   ],
+   [
+    "GroupActor",
+    18
+   ],
+   [
+    "SkeletalMeshActor",
+    9
+   ],
+   [
+    "DirectionalLight",
+    1
+   ],
+   [
+    "PlayerStart",
+    1
+   ],
+   [
+    "InstancedFoliageActor",
+    1
+   ],
+   [
+    "AtmosphericFog",
+    1
+   ]
+  ],
+  "playerstart": [
+   0.0,
+   0.0,
+   112.0
+  ],
+  "ground_trace_hits": 3721,
+  "ground_trace_miss": 0,
+  "ground_z_cm_rel_spawn": [
+   -92.0,
+   -92.0,
+   6308.0
+  ],
+  "cells_survey_total": 3721,
+  "cells_clear_1to3m": 3077,
+  "cells_clear_per_h": {
+   "1.0": 3130,
+   "2.0": 3427,
+   "3.0": 3443
+  },
+  "largest_clear_box_m": [
+   14,
+   33
+  ],
+  "largest_clear_box_area_m2": 462,
+  "largest_clear_box_origin_ned_m": [
+   -28,
+   -28
+  ],
+  "arena630_cells_tested": 580,
+  "arena630_cells_flyable": 466,
+  "spawn_line_clear": [
+   false,
+   false,
+   true,
+   true
+  ],
+  "spawn_line_fits": false
+ },
+ {
+  "map": "/Game/Maps/TechArt",
+  "actors_total": 219,
+  "colliding_actors": 206,
+  "static_mesh_components": 155,
+  "material_slots": 205,
+  "ism_instances": 5,
+  "light_components": 2,
+  "skeletal_components": 33,
+  "landscape_actors": 0,
+  "top_classes": [
+   [
+    "StaticMeshActor",
+    86
+   ],
+   [
+    "Emitter",
+    79
+   ],
+   [
+    "SkeletalMeshActor",
+    17
+   ],
+   [
+    "SceneCapture2D",
+    6
+   ],
+   [
+    "GroupActor",
+    6
+   ],
+   [
+    "BP_RobotHend_C",
+    6
+   ],
+   [
+    "BP_IndustrialRobot_C",
+    5
+   ],
+   [
+    "Actor",
+    4
+   ]
+  ],
+  "playerstart": null,
+  "ground_trace_hits": 149,
+  "ground_trace_miss": 3572,
+  "ground_z_cm_rel_spawn": [
+   125.3,
+   391.9,
+   1248.5
+  ],
+  "cells_survey_total": 3721,
+  "cells_clear_1to3m": 3504,
+  "cells_clear_per_h": {
+   "1.0": 3574,
+   "2.0": 3521,
+   "3.0": 3580
+  },
+  "largest_clear_box_m": [
+   61,
+   23
+  ],
+  "largest_clear_box_area_m2": 1403,
+  "largest_clear_box_origin_ned_m": [
+   -30,
+   -30
+  ],
+  "arena630_cells_tested": 580,
+  "arena630_cells_flyable": 567,
+  "spawn_line_clear": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits": true
+ },
+ {
+  "map": "/Game/Maps/Demonstration",
+  "actors_total": 11870,
+  "colliding_actors": 11107,
+  "static_mesh_components": 8731,
+  "material_slots": 11109,
+  "ism_instances": 5,
+  "light_components": 601,
+  "skeletal_components": 35,
+  "landscape_actors": 0,
+  "top_classes": [
+   [
+    "StaticMeshActor",
+    8625
+   ],
+   [
+    "DecalActor",
+    1687
+   ],
+   [
+    "GroupActor",
+    733
+   ],
+   [
+    "PointLight",
+    349
+   ],
+   [
+    "SpotLight",
+    231
+   ],
+   [
+    "Emitter",
+    94
+   ],
+   [
+    "SphereReflectionCapture",
+    40
+   ],
+   [
+    "CineCameraActor",
+    22
+   ]
+  ],
+  "playerstart": [
+   6800.0,
+   2370.0,
+   112.0
+  ],
+  "ground_trace_hits": 3721,
+  "ground_trace_miss": 0,
+  "ground_z_cm_rel_spawn": [
+   -106.4,
+   2744.3,
+   3338.3
+  ],
+  "cells_survey_total": 3721,
+  "cells_clear_1to3m": 2950,
+  "cells_clear_per_h": {
+   "1.0": 2984,
+   "2.0": 3125,
+   "3.0": 3177
+  },
+  "largest_clear_box_m": [
+   16,
+   61
+  ],
+  "largest_clear_box_area_m2": 976,
+  "largest_clear_box_origin_ned_m": [
+   12,
+   -30
+  ],
+  "arena630_cells_tested": 580,
+  "arena630_cells_flyable": 516,
+  "spawn_line_clear": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits": true
+ },
+ {
+  "map": "/Game/Home_Interior/Maps/Home_Interior",
+  "actors_total": 267,
+  "colliding_actors": 266,
+  "static_mesh_components": 245,
+  "material_slots": 534,
+  "ism_instances": 0,
+  "light_components": 12,
+  "skeletal_components": 0,
+  "landscape_actors": 0,
+  "top_classes": [
+   [
+    "StaticMeshActor",
+    237
+   ],
+   [
+    "RectLight",
+    6
+   ],
+   [
+    "SphereReflectionCapture",
+    6
+   ],
+   [
+    "SpotLight",
+    4
+   ],
+   [
+    "LightmassPortal",
+    2
+   ],
+   [
+    "BP_Spline_Wire_C",
+    2
+   ],
+   [
+    "SkyLight",
+    1
+   ],
+   [
+    "AtmosphericFog",
+    1
+   ]
+  ],
+  "playerstart": [
+   -1180.0,
+   1710.0,
+   102.0
+  ],
+  "ground_trace_hits": 70,
+  "ground_trace_miss": 3651,
+  "ground_z_cm_rel_spawn": [
+   254.7,
+   254.7,
+   254.7
+  ],
+  "cells_survey_total": 3721,
+  "cells_clear_1to3m": 3609,
+  "cells_clear_per_h": {
+   "1.0": 3645,
+   "2.0": 3609,
+   "3.0": 3614
+  },
+  "largest_clear_box_m": [
+   61,
+   26
+  ],
+  "largest_clear_box_area_m2": 1586,
+  "largest_clear_box_origin_ned_m": [
+   -30,
+   -30
+  ],
+  "arena630_cells_tested": 580,
+  "arena630_cells_flyable": 501,
+  "spawn_line_clear": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits": true
+ },
+ {
+  "map": "/Game/Home_Interior/Maps/Home_Interior_Overview",
+  "actors_total": 102,
+  "colliding_actors": 102,
+  "static_mesh_components": 100,
+  "material_slots": 252,
+  "ism_instances": 0,
+  "light_components": 1,
+  "skeletal_components": 0,
+  "landscape_actors": 0,
+  "top_classes": [
+   [
+    "StaticMeshActor",
+    99
+   ],
+   [
+    "Brush",
+    1
+   ],
+   [
+    "DirectionalLight",
+    1
+   ],
+   [
+    "BP_Sky_Sphere_C",
+    1
+   ]
+  ],
+  "playerstart": null,
+  "ground_trace_hits": 2856,
+  "ground_trace_miss": 865,
+  "ground_z_cm_rel_spawn": [
+   25.0,
+   25.0,
+   399.1
+  ],
+  "cells_survey_total": 3721,
+  "cells_clear_1to3m": 3538,
+  "cells_clear_per_h": {
+   "1.0": 3587,
+   "2.0": 3637,
+   "3.0": 3613
+  },
+  "largest_clear_box_m": [
+   40,
+   61
+  ],
+  "largest_clear_box_area_m2": 2440,
+  "largest_clear_box_origin_ned_m": [
+   -30,
+   -30
+  ],
+  "arena630_cells_tested": 580,
+  "arena630_cells_flyable": 580,
+  "spawn_line_clear": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits": true
+ },
+ {
+  "map": "/Game/LowPolyMoonPack/Maps/Overview",
+  "actors_total": 21,
+  "colliding_actors": 21,
+  "static_mesh_components": 16,
+  "material_slots": 22,
+  "ism_instances": 0,
+  "light_components": 1,
+  "skeletal_components": 0,
+  "landscape_actors": 0,
+  "top_classes": [
+   [
+    "StaticMeshActor",
+    15
+   ],
+   [
+    "Brush",
+    2
+   ],
+   [
+    "BP_Sky_Sphere_C",
+    1
+   ],
+   [
+    "SkyLight",
+    1
+   ],
+   [
+    "DirectionalLight",
+    1
+   ],
+   [
+    "SphereReflectionCapture",
+    1
+   ]
+  ],
+  "playerstart": null,
+  "ground_trace_hits": 468,
+  "ground_trace_miss": 3253,
+  "ground_z_cm_rel_spawn": [
+   100.0,
+   100.0,
+   525.0
+  ],
+  "cells_survey_total": 3721,
+  "cells_clear_1to3m": 3641,
+  "cells_clear_per_h": {
+   "1.0": 3673,
+   "2.0": 3658,
+   "3.0": 3665
+  },
+  "largest_clear_box_m": [
+   61,
+   32
+  ],
+  "largest_clear_box_area_m2": 1952,
+  "largest_clear_box_origin_ned_m": [
+   -30,
+   -30
+  ],
+  "arena630_cells_tested": 580,
+  "arena630_cells_flyable": 525,
+  "spawn_line_clear": [
+   true,
+   true,
+   true,
+   false
+  ],
+  "spawn_line_fits": false
+ },
+ {
+  "map": "/Game/LowPolyMoonPack/Maps/Demo",
+  "actors_total": 10,
+  "colliding_actors": 10,
+  "static_mesh_components": 17,
+  "material_slots": 23,
+  "ism_instances": 426400,
+  "light_components": 1,
+  "skeletal_components": 0,
+  "landscape_actors": 1,
+  "top_classes": [
+   [
+    "SkyLight",
+    1
+   ],
+   [
+    "PostProcessVolume",
+    1
+   ],
+   [
+    "DirectionalLight",
+    1
+   ],
+   [
+    "Landscape",
+    1
+   ],
+   [
+    "InstancedFoliageActor",
+    1
+   ],
+   [
+    "StaticMeshActor",
+    1
+   ],
+   [
+    "EarthBP_C",
+    1
+   ],
+   [
+    "StylizedSpaceSkyBP_C",
+    1
+   ]
+  ],
+  "playerstart": [
+   29229.4,
+   43236.2,
+   10367.2
+  ],
+  "ground_trace_hits": 3721,
+  "ground_trace_miss": 0,
+  "ground_z_cm_rel_spawn": [
+   -412.8,
+   -6.4,
+   503.6
+  ],
+  "cells_survey_total": 3721,
+  "cells_clear_1to3m": 2496,
+  "cells_clear_per_h": {
+   "1.0": 3097,
+   "2.0": 3156,
+   "3.0": 3651
+  },
+  "largest_clear_box_m": [
+   30,
+   34
+  ],
+  "largest_clear_box_area_m2": 1020,
+  "largest_clear_box_origin_ned_m": [
+   -30,
+   -3
+  ],
+  "arena630_cells_tested": 580,
+  "arena630_cells_flyable": 578,
+  "spawn_line_clear": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits": true
+ },
+ {
+  "map": "/Game/FlyingCPP/Maps/FlyingExampleMap",
+  "actors_total": 181,
+  "colliding_actors": 181,
+  "static_mesh_components": 172,
+  "material_slots": 172,
+  "ism_instances": 0,
+  "light_components": 1,
+  "skeletal_components": 0,
+  "landscape_actors": 0,
+  "top_classes": [
+   [
+    "StaticMeshActor",
+    171
+   ],
+   [
+    "SphereReflectionCapture",
+    3
+   ],
+   [
+    "AtmosphericFog",
+    1
+   ],
+   [
+    "BP_Sky_Sphere_C",
+    1
+   ],
+   [
+    "LightmassImportanceVolume",
+    1
+   ],
+   [
+    "DirectionalLight",
+    1
+   ],
+   [
+    "PostProcessVolume",
+    1
+   ],
+   [
+    "SkyLight",
+    1
+   ]
+  ],
+  "playerstart": [
+   1370.0,
+   1340.0,
+   190.0
+  ],
+  "ground_trace_hits": 3721,
+  "ground_trace_miss": 0,
+  "ground_z_cm_rel_spawn": [
+   -90.0,
+   -90.0,
+   1410.0
+  ],
+  "cells_survey_total": 3721,
+  "cells_clear_1to3m": 3233,
+  "cells_clear_per_h": {
+   "1.0": 3233,
+   "2.0": 3233,
+   "3.0": 3280
+  },
+  "largest_clear_box_m": [
+   36,
+   48
+  ],
+  "largest_clear_box_area_m2": 1728,
+  "largest_clear_box_origin_ned_m": [
+   -30,
+   -17
+  ],
+  "arena630_cells_tested": 580,
+  "arena630_cells_flyable": 580,
+  "spawn_line_clear": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "spawn_line_fits": true
+ },
+ {
+  "map": "/Game/Maps/JapanFest_Street",
+  "actors_total": 2119,
+  "colliding_actors": 2104,
+  "static_mesh_components": 2320,
+  "material_slots": 2742,
+  "ism_instances": 0,
+  "light_components": 12,
+  "skeletal_components": 0,
+  "landscape_actors": 0,
+  "top_classes": [
+   [
+    "StaticMeshActor",
+    1962
+   ],
+   [
+    "BP_Wire_C",
+    30
+   ],
+   [
+    "BP_Pipes_C",
+    24
+   ],
+   [
+    "DecalActor",
+    19
+   ],
+   [
+    "CineCameraActor",
+    14
+   ],
+   [
+    "BlockingVolume",
+    8
+   ],
+   [
+    "PointLight",
+    6
+   ],
+   [
+    "BP_StrawberryCrate_C",
+    6
+   ]
+  ],
+  "playerstart": [
+   -1006.0,
+   -119.0,
+   2348.0
+  ],
+  "ground_trace_hits": 2138,
+  "ground_trace_miss": 1583,
+  "ground_z_cm_rel_spawn": [
+   -98.0,
+   988.3,
+   2169.2
+  ],
+  "cells_survey_total": 3721,
+  "cells_clear_1to3m": 2538,
+  "cells_clear_per_h": {
+   "1.0": 2748,
+   "2.0": 2777,
+   "3.0": 2655
+  },
+  "largest_clear_box_m": [
+   18,
+   61
+  ],
+  "largest_clear_box_area_m2": 1098,
+  "largest_clear_box_origin_ned_m": [
+   13,
+   -30
+  ],
+  "arena630_cells_tested": 580,
+  "arena630_cells_flyable": 285,
+  "spawn_line_clear": [
+   true,
+   true,
+   true,
+   false
+  ],
+  "spawn_line_fits": false
+ }
+]

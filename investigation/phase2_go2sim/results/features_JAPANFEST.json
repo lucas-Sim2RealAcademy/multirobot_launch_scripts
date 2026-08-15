@@ -1,0 +1,102 @@
+{
+ "summary": {
+  "label": "JAPANFEST",
+  "n_poses": 8,
+  "st_min": 53,
+  "st_med": 906,
+  "st_max": 1463,
+  "grnd_min": 0,
+  "grnd_med": 480,
+  "grnd_max": 760
+ },
+ "per_pose": [
+  {
+   "pose": "q0_anchor",
+   "st": 906,
+   "fast": 3156,
+   "cells": 46,
+   "lk": 903,
+   "meddisp": 3.656585693359375,
+   "usable_gt2px": 98.89258028792912,
+   "grnd": 472,
+   "grndZ": 2.994140625
+  },
+  {
+   "pose": "q1_e",
+   "st": 542,
+   "fast": 1476,
+   "cells": 41,
+   "lk": 523,
+   "meddisp": 6.9451904296875,
+   "usable_gt2px": 99.04397705544933,
+   "grnd": 387,
+   "grndZ": 2.5810546875
+  },
+  {
+   "pose": "q2_n",
+   "st": 1463,
+   "fast": 4586,
+   "cells": 46,
+   "lk": 1444,
+   "meddisp": 11.878128051757812,
+   "usable_gt2px": 89.9584487534626,
+   "grnd": 760,
+   "grndZ": 1.271484375
+  },
+  {
+   "pose": "q3_w",
+   "st": 53,
+   "fast": 87,
+   "cells": 4,
+   "lk": 52,
+   "meddisp": 4.324859619140625,
+   "usable_gt2px": 98.07692307692307,
+   "grnd": 0,
+   "grndZ": 0.21435546875
+  },
+  {
+   "pose": "q4_s",
+   "st": 1098,
+   "fast": 2924,
+   "cells": 48,
+   "lk": 1093,
+   "meddisp": 5.2795562744140625,
+   "usable_gt2px": 90.39341262580055,
+   "grnd": 558,
+   "grndZ": 2.857421875
+  },
+  {
+   "pose": "q5_hi",
+   "st": 965,
+   "fast": 2529,
+   "cells": 47,
+   "lk": 961,
+   "meddisp": 4.37957763671875,
+   "usable_gt2px": 78.9802289281998,
+   "grnd": 502,
+   "grndZ": 2.720703125
+  },
+  {
+   "pose": "q6_lo",
+   "st": 609,
+   "fast": 573,
+   "cells": 47,
+   "lk": 570,
+   "meddisp": 15.613853454589844,
+   "usable_gt2px": 99.47368421052632,
+   "grnd": 366,
+   "grndZ": 1.2421875
+  },
+  {
+   "pose": "q7_spawn",
+   "st": 881,
+   "fast": 2876,
+   "cells": 46,
+   "lk": 879,
+   "meddisp": 3.7940597534179688,
+   "usable_gt2px": 98.97610921501706,
+   "grnd": 480,
+   "grndZ": 2.98046875
+  }
+ ]
+}

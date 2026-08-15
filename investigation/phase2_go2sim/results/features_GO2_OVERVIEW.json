@@ -1,0 +1,102 @@
+{
+ "summary": {
+  "label": "GO2_OVERVIEW",
+  "n_poses": 8,
+  "st_min": 178,
+  "st_med": 405,
+  "st_max": 724,
+  "grnd_min": 0,
+  "grnd_med": 54,
+  "grnd_max": 146
+ },
+ "per_pose": [
+  {
+   "pose": "q0_anchor",
+   "st": 450,
+   "fast": 1017,
+   "cells": 34,
+   "lk": 438,
+   "meddisp": 4.643842697143555,
+   "usable_gt2px": 72.6027397260274,
+   "grnd": 146,
+   "grndZ": 2.03515625
+  },
+  {
+   "pose": "q1_e",
+   "st": 422,
+   "fast": 1240,
+   "cells": 30,
+   "lk": 422,
+   "meddisp": 1.35418701171875,
+   "usable_gt2px": 31.516587677725116,
+   "grnd": 23,
+   "grndZ": 1.97802734375
+  },
+  {
+   "pose": "q2_n",
+   "st": 405,
+   "fast": 1245,
+   "cells": 34,
+   "lk": 403,
+   "meddisp": 1.194427490234375,
+   "usable_gt2px": 25.06203473945409,
+   "grnd": 32,
+   "grndZ": 1.97802734375
+  },
+  {
+   "pose": "q3_w",
+   "st": 178,
+   "fast": 661,
+   "cells": 16,
+   "lk": 175,
+   "meddisp": 0.981170654296875,
+   "usable_gt2px": 3.428571428571429,
+   "grnd": 6,
+   "grndZ": 1.98486328125
+  },
+  {
+   "pose": "q4_s",
+   "st": 212,
+   "fast": 572,
+   "cells": 23,
+   "lk": 207,
+   "meddisp": 2.730194091796875,
+   "usable_gt2px": 54.106280193236714,
+   "grnd": 54,
+   "grndZ": 1.638671875
+  },
+  {
+   "pose": "q5_hi",
+   "st": 724,
+   "fast": 2287,
+   "cells": 39,
+   "lk": 724,
+   "meddisp": 0.9437160491943359,
+   "usable_gt2px": 13.950276243093922,
+   "grnd": 86,
+   "grndZ": 3.994140625
+  },
+  {
+   "pose": "q6_lo",
+   "st": 217,
+   "fast": 748,
+   "cells": 17,
+   "lk": 216,
+   "meddisp": 0.9740622043609619,
+   "usable_gt2px": 22.22222222222222,
+   "grnd": 0,
+   "grndZ": 1.0146484375
+  },
+  {
+   "pose": "q7_spawn",
+   "st": 386,
+   "fast": 825,
+   "cells": 33,
+   "lk": 381,
+   "meddisp": 4.139923095703125,
+   "usable_gt2px": 69.5538057742782,
+   "grnd": 126,
+   "grndZ": 2.21484375
+  }
+ ]
+}

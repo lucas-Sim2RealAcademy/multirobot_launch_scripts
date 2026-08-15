@@ -41,7 +41,7 @@ VEH = os.environ.get('NB_VEH', 'ghost')
 # airsim_realsense_node (Q9); this bridge then only flies the drone, stubs PX4 status and
 # does the chase-cam capture. Default 1 keeps the original standalone behaviour.
 SENSORS = os.environ.get('NB_SENSORS', '1') == '1'
-FLIGHT_Z = -1.0
+FLIGHT_Z = -float(os.environ.get('HERC_FLIGHT_HEIGHT', '1.0'))
 FOV = 87.0
 BASELINE = 0.05
 CAM_PITCH = math.radians(20.0)
@@ -311,6 +311,18 @@ class CuvslamBridge(Node):
             yaw_err = abs((self._yaw_cmd - math.degrees(self.ned[3]) + 180.0)
                           % 360.0 - 180.0)
             if dist < ROTATE_IN_PLACE_M and yaw_err > 2.0:
+                # Altitude leak fix: rotateToYawAsync holds CURRENT z, and long
+                # rotate phases let takeoff overshoot persist forever (measured
+                # -1.27..-1.36 vs -1.0 commanded).  When z has drifted, drive
+                # yaw via a position command at current xy with the CORRECT z —
+                # xy equal but z differing avoids the start==goal deadlock.
+                if abs(self.ned[2] - pz) > 0.15:
+                    self.ctl.moveToPositionAsync(
+                        self.ned[0], self.ned[1], pz, 0.8,
+                        drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom,
+                        yaw_mode=airsim.YawMode(False, self._yaw_cmd),
+                        vehicle_name=VEH)
+                    return
                 self.ctl.rotateToYawAsync(self._yaw_cmd, timeout_sec=3.0,
                                           margin=2.0, vehicle_name=VEH)
                 return
@@ -424,7 +436,7 @@ def main():
     t0 = time.time()
     while time.time() - t0 < 15:
         if abs(ctl.getMultirotorState(VEH).kinematics_estimated.position.z_val
-               - FLIGHT_Z) < 0.3:
+               - FLIGHT_Z) < 0.1:
             break
         time.sleep(0.3)
     print('airborne', flush=True)

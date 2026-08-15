@@ -1,0 +1,160 @@
+{
+ "label": "HOME_INTERIOR",
+ "port": 41471,
+ "burst_n": 40,
+ "load1_start": 16.68,
+ "spawn_pose_ned": [
+  0.0,
+  0.0,
+  69.62
+ ],
+ "voxel_ok": true,
+ "voxel_secs": 0.0,
+ "voxel_centre_ned": [
+  0.0,
+  4.5,
+  69.62
+ ],
+ "voxel_bytes": 604,
+ "probe_anchor_ned": [
+  0.0,
+  4.5
+ ],
+ "warmup_calls": 200,
+ "per_pose": [
+  {
+   "pose": "q0_anchor",
+   "ned": [
+    0.0,
+    4.5,
+    68.1
+   ],
+   "yaw": 0,
+   "captured": true,
+   "load1": 16.62,
+   "stereo_ms_p50": 18.2,
+   "stereo_ms_p10": 16.77,
+   "stereo_ms_p90": 20.58,
+   "depth_mid_m": 16352.0,
+   "depth_bot_m": 13656.0
+  },
+  {
+   "pose": "q1_e",
+   "ned": [
+    4.0,
+    4.5,
+    68.1
+   ],
+   "yaw": 0,
+   "captured": true,
+   "load1": 16.41,
+   "stereo_ms_p50": 18.71,
+   "stereo_ms_p10": 17.08,
+   "stereo_ms_p90": 26.31,
+   "depth_mid_m": 16344.0,
+   "depth_bot_m": 13648.0
+  },
+  {
+   "pose": "q2_n",
+   "ned": [
+    0.0,
+    8.5,
+    68.1
+   ],
+   "yaw": 90,
+   "captured": true,
+   "load1": 16.38,
+   "stereo_ms_p50": 18.47,
+   "stereo_ms_p10": 16.59,
+   "stereo_ms_p90": 24.25,
+   "depth_mid_m": 16320.0,
+   "depth_bot_m": 13632.0
+  },
+  {
+   "pose": "q3_w",
+   "ned": [
+    -4.0,
+    4.5,
+    68.1
+   ],
+   "yaw": 180,
+   "captured": true,
+   "load1": 16.26,
+   "stereo_ms_p50": 17.91,
+   "stereo_ms_p10": 16.51,
+   "stereo_ms_p90": 21.58,
+   "depth_mid_m": 16320.0,
+   "depth_bot_m": 13632.0
+  },
+  {
+   "pose": "q4_s",
+   "ned": [
+    0.0,
+    0.5,
+    68.1
+   ],
+   "yaw": 270,
+   "captured": true,
+   "load1": 16.32,
+   "stereo_ms_p50": 18.47,
+   "stereo_ms_p10": 16.58,
+   "stereo_ms_p90": 20.6,
+   "depth_mid_m": 16344.0,
+   "depth_bot_m": 13648.0
+  },
+  {
+   "pose": "q5_hi",
+   "ned": [
+    2.0,
+    6.5,
+    66.6
+   ],
+   "yaw": 45,
+   "captured": true,
+   "load1": 16.93,
+   "stereo_ms_p50": 18.15,
+   "stereo_ms_p10": 16.59,
+   "stereo_ms_p90": 43.4,
+   "depth_mid_m": 16336.0,
+   "depth_bot_m": 13640.0
+  },
+  {
+   "pose": "q6_lo",
+   "ned": [
+    -2.0,
+    2.5,
+    68.8
+   ],
+   "yaw": 225,
+   "captured": true,
+   "load1": 16.94,
+   "stereo_ms_p50": 12.45,
+   "stereo_ms_p10": 11.6,
+   "stereo_ms_p90": 18.12,
+   "depth_mid_m": 16336.0,
+   "depth_bot_m": 13640.0
+  },
+  {
+   "pose": "q7_spawn",
+   "ned": [
+    0.0,
+    0.0,
+    68.1
+   ],
+   "yaw": 0,
+   "captured": true,
+   "load1": 16.22,
+   "stereo_ms_p50": 12.61,
+   "stereo_ms_p10": 11.88,
+   "stereo_ms_p90": 14.14,
+   "depth_mid_m": 16352.0,
+   "depth_bot_m": 13656.0
+  }
+ ],
+ "stereo_ms_all_p50": 17.84,
+ "stereo_ms_all_p90": 23.07,
+ "stereo_ms_pose_median": 18.18,
+ "stereo_ms_pose_min": 12.45,
+ "stereo_ms_pose_max": 18.71,
+ "load1_end": 16.22
+}

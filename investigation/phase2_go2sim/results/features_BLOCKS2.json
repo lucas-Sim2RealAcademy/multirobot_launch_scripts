@@ -1,0 +1,102 @@
+{
+ "summary": {
+  "label": "BLOCKS2",
+  "n_poses": 8,
+  "st_min": 304,
+  "st_med": 698,
+  "st_max": 2000,
+  "grnd_min": 5,
+  "grnd_med": 51,
+  "grnd_max": 1279
+ },
+ "per_pose": [
+  {
+   "pose": "q0_anchor",
+   "st": 612,
+   "fast": 611,
+   "cells": 26,
+   "lk": 612,
+   "meddisp": 1.0172882080078125,
+   "usable_gt2px": 2.1241830065359477,
+   "grnd": 5,
+   "grndZ": 1.970703125
+  },
+  {
+   "pose": "q1_e",
+   "st": 698,
+   "fast": 635,
+   "cells": 31,
+   "lk": 698,
+   "meddisp": 1.207000732421875,
+   "usable_gt2px": 20.057306590257877,
+   "grnd": 13,
+   "grndZ": 1.970703125
+  },
+  {
+   "pose": "q2_n",
+   "st": 728,
+   "fast": 204,
+   "cells": 38,
+   "lk": 728,
+   "meddisp": 1.0841007232666016,
+   "usable_gt2px": 31.318681318681318,
+   "grnd": 142,
+   "grndZ": 1.970703125
+  },
+  {
+   "pose": "q3_w",
+   "st": 2000,
+   "fast": 2,
+   "cells": 45,
+   "lk": 1995,
+   "meddisp": 5.5316619873046875,
+   "usable_gt2px": 81.15288220551379,
+   "grnd": 1279,
+   "grndZ": 1.970703125
+  },
+  {
+   "pose": "q4_s",
+   "st": 304,
+   "fast": 332,
+   "cells": 23,
+   "lk": 304,
+   "meddisp": 0.678436279296875,
+   "usable_gt2px": 5.263157894736842,
+   "grnd": 9,
+   "grndZ": 1.970703125
+  },
+  {
+   "pose": "q5_hi",
+   "st": 1239,
+   "fast": 595,
+   "cells": 45,
+   "lk": 1239,
+   "meddisp": 1.4017791748046875,
+   "usable_gt2px": 23.163841807909606,
+   "grnd": 296,
+   "grndZ": 3.98046875
+  },
+  {
+   "pose": "q6_lo",
+   "st": 390,
+   "fast": 119,
+   "cells": 29,
+   "lk": 387,
+   "meddisp": 2.009918212890625,
+   "usable_gt2px": 50.129198966408275,
+   "grnd": 51,
+   "grndZ": 1.0322265625
+  },
+  {
+   "pose": "q7_spawn",
+   "st": 564,
+   "fast": 542,
+   "cells": 30,
+   "lk": 564,
+   "meddisp": 0.8649139404296875,
+   "usable_gt2px": 3.0141843971631204,
+   "grnd": 12,
+   "grndZ": 1.970703125
+  }
+ ]
+}
