@@ -234,6 +234,10 @@ for idx in $(seq 0 $((N-1))); do
       > $LOG/nvblox_${LABEL}_$VEH.log 2>&1 &
     ros2 launch active_exploration fis.launch.py flight_height:=$FLIGHT_HEIGHT \
       geofence_margin:=${HERC_FIS_GEOFENCE_MARGIN:-1.4} \
+      height_band:=${HERC_FIS_HEIGHT_BAND:-1.0} \
+      vp_z_levels:=${HERC_FIS_VP_Z_LEVELS:-1} \
+      vp_dz:=${HERC_FIS_VP_DZ:-0.5} \
+      publish_grid_3d:=${HERC_FIS_PUBLISH_GRID_3D:-false} \
       "${FIS_BBOX_ARGS[@]}" \
       > $LOG/fis_${LABEL}_$VEH.log 2>&1 &
     # REAL coordination stage + REAL radiohive bridge on the virtual radio

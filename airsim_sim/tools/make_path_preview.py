@@ -99,9 +99,24 @@ def draw(ax, tmax=None):
         s.set_color("#3a3f4c")
     return stats
 
-fig, ax = plt.subplots(figsize=(9.6, 9.6), dpi=100)
+fig = plt.figure(figsize=(9.6, 12.0), dpi=100)
 fig.patch.set_facecolor("#14161e")
+gs = fig.add_gridspec(2, 1, height_ratios=[4, 1], hspace=0.18)
+ax = fig.add_subplot(gs[0])
+axz = fig.add_subplot(gs[1])
 stats = draw(ax)
+# altitude strip: AGL (=-ned_z) vs mission time per drone
+for d in DRONES:
+    rows = tracks[d]
+    axz.plot([r[0] - t0 for r in rows], [r[3] for r in rows],
+             color=COLORS[d], lw=1.4)
+axz.set_facecolor("#14161e")
+axz.set_ylabel("altitude (m)", color="#aab2c0")
+axz.set_xlabel("t (s)", color="#aab2c0")
+axz.tick_params(colors="#8f98a8", labelsize=8)
+axz.set_ylim(bottom=0)
+for s in axz.spines.values():
+    s.set_color("#3a3f4c")
 el = t1 - t0
 ax.set_title(f"{a.label} — flown paths, {el:.0f}s, fence ±{a.half_m:.0f}m (dashed)",
              color="white", fontsize=13, pad=12)
