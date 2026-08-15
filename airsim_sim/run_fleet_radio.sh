@@ -223,11 +223,13 @@ for idx in $(seq 0 $((N-1))); do
       -r visual_slam/imu:=/sim/imu \
       > $LOG/cuvslam_${LABEL}_$VEH.log 2>&1 &
     $BASE/ros2_ws/install/active_exploration/lib/active_exploration/odom_correction \
+      --ros-args -p z_anchor_tau_s:=${HERC_Z_ANCHOR_TAU:-20.0} \
       > $LOG/odomcorr_${LABEL}_$VEH.log 2>&1 &
     $BASE/ros2_ws/install/nvblox_ros/lib/nvblox_ros/nvblox_node --ros-args \
       --params-file "$NVBLOX_YAML" \
       -p use_lidar:=false -p use_color:=false -p use_segmentation:=false \
       -p global_frame:=odom \
+      -p decay_tsdf_rate_hz:=${HERC_TSDF_DECAY_HZ:-0.0} \
       -p input_qos:=SENSOR_DATA \
       -r camera_0/depth/image:=/sim/depth/image \
       -r camera_0/depth/camera_info:=/sim/depth/camera_info \
@@ -249,6 +251,7 @@ for idx in $(seq 0 $((N-1))); do
       > $LOG/lorabridge_${LABEL}_$VEH.log 2>&1 &
     python3 $BASE/src/active_exploration/scripts/simple_exploration_planner.py \
       --ros-args -p debug_skip_arm_check:=true -p flight_height:=$FLIGHT_HEIGHT -p vehicle_id:=$DOM \
+      -p odom_topic:=${HERC_ODOM_TOPIC:-/visual_slam/tracking/odometry_level} \
       "${PLN_BBOX_ARGS[@]}" "${PLN_THRESH_ARGS[@]}" \
       > $LOG/planner_${LABEL}_$VEH.log 2>&1 &
     CAP=$CAPTURE   # capture every drone (2x2 grid video)
