@@ -180,6 +180,113 @@ unreal.EditorAssetLibrary.save_directory(SEQ_DIR, only_if_is_dirty=True)
 # cinematic, no embedded graphics). See build_fleet_seq6.py for the
 # original sections. Stale-asset deletion above still scrubs old paint
 # assets out of /Game/FleetMRQ. ============
+#
+# v6 (EXECUTION-PLAN-V6 §2 SHOT 5): ribbons are BACK, env-gated so the clean
+# default is untouched.  RIBBONS=1 imports temple/ribbon_<v>.obj (baked by
+# bake_ribbons_v6.py, u = chronological flight fraction), builds an unlit
+# additive reveal material driven by MPC CoverageTime, and (below, after the
+# camera-cut track) adds 4 ribbon spawnables + CoverageTime keys that hold 0
+# until RIBBON_REVEAL="f0:f1", sweep 0->1 across [f0,f1], then hold 1.
+RIBBONS = os.environ.get("RIBBONS", "0") == "1"
+rib_meshes, rib_mics, mpc = {}, {}, None
+if RIBBONS:
+    DRONE_ORDER = ["ghost", "delta", "buckshee", "thunderstrike"]
+    # §3 legend colors: 3f8cff / 3fff72 / ff4cf2 / ff941e
+    DRONE_COLORS = {"ghost": (0.247, 0.549, 1.00),
+                    "delta": (0.247, 1.00, 0.447),
+                    "buckshee": (1.00, 0.298, 0.949),
+                    "thunderstrike": (1.00, 0.580, 0.118)}
+    mel = unreal.MaterialEditingLibrary
+    tasks = []
+    for v in DRONE_ORDER:
+        to = unreal.AssetImportTask()
+        to.filename = W + f"/ribbon_{v}.obj"
+        to.destination_path = SEQ_DIR
+        to.automated = True
+        to.save = False
+        to.replace_existing = True
+        tasks.append(to)
+    at.import_asset_tasks(tasks)
+    sms_sub = None
+    try:
+        sms_sub = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+    except Exception:
+        pass
+    for v in DRONE_ORDER:
+        rm = unreal.EditorAssetLibrary.load_asset(f"{SEQ_DIR}/ribbon_{v}")
+        assert isinstance(rm, unreal.StaticMesh), f"ribbon_{v} import failed"
+        try:  # Interchange auto-enables Nanite; unlit translucent needs it OFF
+            ns = rm.get_editor_property("nanite_settings")
+            if ns.get_editor_property("enabled"):
+                ns.set_editor_property("enabled", False)
+                if sms_sub is not None:
+                    sms_sub.set_nanite_settings(rm, ns, True)
+                else:
+                    rm.set_editor_property("nanite_settings", ns)
+        except Exception as _ne:
+            P(f"[fleet6] ribbon_{v} nanite disable failed:", _ne)
+        rib_meshes[v] = rm
+        bb2 = rm.get_bounding_box()
+        P(f"[fleet6] ribbon_{v} bounds X[{bb2.min.x:.0f},{bb2.max.x:.0f}] "
+          f"Y[{bb2.min.y:.0f},{bb2.max.y:.0f}] Z[{bb2.min.z:.0f},{bb2.max.z:.0f}]")
+    mpc = at.create_asset("MPC_Coverage", SEQ_DIR, unreal.MaterialParameterCollection,
+                          unreal.MaterialParameterCollectionFactoryNew())
+    _sp = unreal.CollectionScalarParameter()
+    _sp.set_editor_property("parameter_name", "CoverageTime")
+    _sp.set_editor_property("default_value", 0.0)
+    mpc.set_editor_property("scalar_parameters", [_sp])
+    RIBBON_HLSL = """
+float u = UV.x;
+if (u > CT) return float4(0,0,0,0);
+float dt = CT - u;
+float head = saturate(1.0 - dt*40.0);
+float3 e = COL.rgb * (0.85 + 10.0*head*head);
+return float4(e, 1.0);
+"""
+
+    def custom_input(nm_):
+        ci = unreal.CustomInput()
+        ci.set_editor_property("input_name", nm_)
+        return ci
+
+    m_rib = at.create_asset("M_Ribbon", SEQ_DIR, unreal.Material,
+                            unreal.MaterialFactoryNew())
+    m_rib.set_editor_property("blend_mode", unreal.BlendMode.BLEND_ADDITIVE)
+    m_rib.set_editor_property("shading_model", unreal.MaterialShadingModel.MSM_UNLIT)
+    m_rib.set_editor_property("two_sided", True)
+    cu2 = mel.create_material_expression(m_rib, unreal.MaterialExpressionCustom, -700, 0)
+    cu2.set_editor_property("code", RIBBON_HLSL)
+    cu2.set_editor_property("output_type", unreal.CustomMaterialOutputType.CMOT_FLOAT4)
+    cu2.set_editor_property("inputs", [custom_input("UV"), custom_input("CT"),
+                                       custom_input("COL")])
+    uvx = mel.create_material_expression(m_rib, unreal.MaterialExpressionTextureCoordinate, -1000, -100)
+    cp2 = mel.create_material_expression(m_rib, unreal.MaterialExpressionCollectionParameter, -1000, 0)
+    cp2.set_editor_property("collection", mpc)
+    cp2.set_editor_property("parameter_name", "CoverageTime")
+    vcol = mel.create_material_expression(m_rib, unreal.MaterialExpressionVectorParameter, -1000, 100)
+    vcol.set_editor_property("parameter_name", "DroneColor")
+    vcol.set_editor_property("default_value", unreal.LinearColor(1, 1, 1, 1))
+    mel.connect_material_expressions(uvx, "", cu2, "UV")
+    mel.connect_material_expressions(cp2, "", cu2, "CT")
+    mel.connect_material_expressions(vcol, "", cu2, "COL")
+    mk2 = mel.create_material_expression(m_rib, unreal.MaterialExpressionComponentMask, -400, 0)
+    mk2.set_editor_property("r", True)
+    mk2.set_editor_property("g", True)
+    mk2.set_editor_property("b", True)
+    mk2.set_editor_property("a", False)
+    mel.connect_material_expressions(cu2, "", mk2, "")
+    mel.connect_material_property(mk2, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    mel.recompile_material(m_rib)
+    for v in DRONE_ORDER:
+        mic = at.create_asset(f"MIC_Ribbon_{v}", SEQ_DIR, unreal.MaterialInstanceConstant,
+                              unreal.MaterialInstanceConstantFactoryNew())
+        mel.set_material_instance_parent(mic, m_rib)
+        r, g, b = DRONE_COLORS[v]
+        mel.set_material_instance_vector_parameter_value(
+            mic, "DroneColor", unreal.LinearColor(r, g, b, 1))
+        rib_mics[v] = mic
+    P("[fleet6] v6 ribbons: 4 OBJs + M_Ribbon + MICs + MPC built")
+    unreal.EditorAssetLibrary.save_directory(SEQ_DIR, only_if_is_dirty=True)
 
 # ---------- load the map (never saved) ----------
 ok = les.load_level(MAP_PATH)
@@ -439,6 +546,47 @@ P("[fleet6] camera + cut track done")
 # ---------- coverage-paint spawnables: REMOVED (clean cinematic) ----------
 
 # ---------- MPC clock track: REMOVED (clean cinematic) ----------
+
+# ---------- v6 ribbon spawnables + CoverageTime reveal track ----------
+if RIBBONS:
+    def static_transform(binding, loc, rot_pyr=(0.0, 0.0, 0.0)):
+        tr2 = binding.add_track(unreal.MovieScene3DTransformTrack)
+        s2 = tr2.add_section()
+        s2.set_range(-WARM, N)
+        ch2 = s2.get_all_channels()
+        for i, v2 in enumerate(loc):
+            ch2[i].set_default(float(v2))
+        ch2[3].set_default(float(rot_pyr[2]))
+        ch2[4].set_default(float(rot_pyr[0]))
+        ch2[5].set_default(float(rot_pyr[1]))
+        for i in (6, 7, 8):
+            ch2[i].set_default(1.0)
+
+    for v in ["ghost", "delta", "buckshee", "thunderstrike"]:
+        rsp, rtmpl = make_spawnable_from_class(unreal.StaticMeshActor, f"Ribbon_{v}")
+        assert rtmpl is not None
+        rsmc = rtmpl.get_editor_property("static_mesh_component")
+        rsmc.set_editor_property("mobility", unreal.ComponentMobility.MOVABLE)
+        rsmc.set_static_mesh(rib_meshes[v])
+        rsmc.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        try:
+            rsmc.set_material(0, rib_mics[v])
+        except Exception as _me:
+            P(f"[fleet6] ribbon {v} material override failed:", _me)
+        static_transform(rsp, (0.0, 0.0, 0.0))
+    # CoverageTime: 0 until f0, sweep to 1 across [f0,f1], hold 1
+    f0, f1 = (int(x) for x in os.environ.get("RIBBON_REVEAL", "0:60").split(":"))
+    mpct = seq.add_track(unreal.MovieSceneMaterialParameterCollectionTrack)
+    mpct.set_editor_property("mpc", mpc)
+    msec = mpct.add_section()
+    msec.set_range(-WARM, N)
+    # -0.01 pre-reveal so even the u=0 first path point stays hidden
+    msec.add_scalar_parameter_key("CoverageTime", unreal.FrameNumber(0), -0.01)
+    mch = msec.get_all_channels()[0]
+    for f2, val in ((f0, -0.01), (f1, 1.0), (N - 1, 1.0)):
+        if f2 != 0:
+            mch.add_key(unreal.FrameNumber(f2), float(val), 0.0, DR, LIN)
+    P(f"[fleet6] 4 ribbon spawnables + reveal keys [{f0},{f1}]")
 
 unreal.EditorAssetLibrary.save_directory(SEQ_DIR, only_if_is_dirty=False)
 P("[fleet6] saved /Game/FleetMRQ (nothing else)")
