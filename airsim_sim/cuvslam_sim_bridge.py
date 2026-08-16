@@ -42,6 +42,9 @@ VEH = os.environ.get('NB_VEH', 'ghost')
 # does the chase-cam capture. Default 1 keeps the original standalone behaviour.
 SENSORS = os.environ.get('NB_SENSORS', '1') == '1'
 FLIGHT_Z = -float(os.environ.get('HERC_FLIGHT_HEIGHT', '1.0'))
+# Wedged-takeoff rescue (see the takeoff block).  Inert unless set.
+TAKEOFF_RESCUE = os.environ.get('HERC_TAKEOFF_RESCUE', '0') == '1'
+TAKEOFF_MIN_AGL = float(os.environ.get('HERC_TAKEOFF_MIN_AGL', '1.0'))
 FOV = 87.0
 BASELINE = 0.05
 CAM_PITCH = math.radians(20.0)
@@ -432,6 +435,28 @@ def main():
         if z < -0.4:
             break
         print(f'takeoff retry {attempt + 1} (z={z:.2f})', flush=True)
+    # Wedged-vehicle rescue.  On uneven maps (temple) the vehicle can settle
+    # BELOW its spawn datum: takeoffAsync then lifts it a few cm and returns,
+    # z stays > -0.4, and the old code printed 'airborne' anyway -- 81 of 92
+    # temple drone-runs flew a full 300 s sitting on the floor and were scored
+    # as flights.  With HERC_TAKEOFF_RESCUE=1: climb relative to where the
+    # vehicle ACTUALLY is, then refuse to continue if still not airborne.
+    if TAKEOFF_RESCUE:
+        z = ctl.getMultirotorState(VEH).kinematics_estimated.position.z_val
+        if z > -0.4:
+            print(f'takeoff rescue: wedged at z={z:.2f}, climbing relative',
+                  flush=True)
+            for _ in range(3):
+                target = min(z - TAKEOFF_MIN_AGL, FLIGHT_Z)
+                ctl.moveToZAsync(target, 1.0, vehicle_name=VEH).join()
+                time.sleep(1.0)
+                z = ctl.getMultirotorState(VEH).kinematics_estimated.position.z_val
+                if z < -0.4:
+                    break
+        if z > -0.4:
+            print(f'TAKEOFF FAILED: z={z:.2f} after rescue; aborting so the '
+                  f'run is not scored as a flight', flush=True)
+            sys.exit(3)
     ctl.moveToZAsync(FLIGHT_Z, 1.0, vehicle_name=VEH)
     t0 = time.time()
     while time.time() - t0 < 15:

@@ -8,9 +8,9 @@
     "ghost": {
       "VehicleType": "SimpleFlight",
       "AutoCreate": true,
-      "X": 9.5,
-      "Y": -6.5,
-      "Z": -0.79,
+      "X": -6,
+      "Y": -6,
+      "Z": -0.5,
       "Cameras": {
         "front_center": {
           "CaptureSettings": [
@@ -102,9 +102,9 @@
     "delta": {
       "VehicleType": "SimpleFlight",
       "AutoCreate": true,
-      "X": -8.0,
-      "Y": -8.0,
-      "Z": -0.6,
+      "X": -6,
+      "Y": 6,
+      "Z": -0.5,
       "Cameras": {
         "front_center": {
           "CaptureSettings": [
@@ -196,9 +196,9 @@
     "buckshee": {
       "VehicleType": "SimpleFlight",
       "AutoCreate": true,
-      "X": -6.0,
-      "Y": 2.0,
-      "Z": -0.17,
+      "X": 6,
+      "Y": -6,
+      "Z": -0.5,
       "Cameras": {
         "front_center": {
           "CaptureSettings": [
@@ -290,9 +290,9 @@
     "thunderstrike": {
       "VehicleType": "SimpleFlight",
       "AutoCreate": true,
-      "X": 1.0,
-      "Y": -8.0,
-      "Z": -0.72,
+      "X": 6,
+      "Y": 6,
+      "Z": -0.5,
       "Cameras": {
         "front_center": {
           "CaptureSettings": [
