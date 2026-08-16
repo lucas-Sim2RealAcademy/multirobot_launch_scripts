@@ -141,6 +141,7 @@ cd $BASE/HERCULES/Unreal/Environments/Blocks
 /home/lucas/UE5/UE5.2.1/Engine/Binaries/Linux/UnrealEditor "$PWD/Blocks.uproject" \
   "${UE_MAP_ARG[@]}" \
   -game -RenderOffscreen -windowed -ResX=1280 -ResY=720 \
+  ${HERC_UE_LOWSPEC:+-ExecCmds="sg.ShadowQuality 0, sg.GlobalIlluminationQuality 0, sg.ReflectionQuality 0, sg.EffectsQuality 0, r.Shadow.Virtual.Enable 0"} \
   -settings=$SETTINGS -log -stdout -unattended -nosplash \
   > $LOG/ue_$LABEL.log 2>&1 &
 cd $BASE
