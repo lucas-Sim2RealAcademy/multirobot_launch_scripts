@@ -52,6 +52,10 @@ DEPTH_HZ=${HERC_DEPTH_HZ:-10.0}   # MUST be a float (int kills the node); nvblox
 IMU_HZ=${HERC_IMU_HZ:-200.0}
 FLIGHT_HEIGHT=${HERC_FLIGHT_HEIGHT:-1.0}   # m AGL commanded everywhere (FIS band, planner z, bridge takeoff)
 export HERC_FLIGHT_HEIGHT=$FLIGHT_HEIGHT
+# Altitude-layered exploration (vertical deconfliction): per-drone flight
+# heights, space-separated in spawn order.  Empty = everyone at FLIGHT_HEIGHT.
+#   HERC_FLIGHT_HEIGHTS="0.9 1.5 2.1 2.7"
+read -ra FLIGHT_HEIGHTS <<< "${HERC_FLIGHT_HEIGHTS:-}" 
 # ---- environment/map selection (JapanFest port) --------------------------
 # HERC_SETTINGS   AirSim settings json (default: the Blocks 4-drone file)
 # HERC_UE_MAP     package path of the map to load, e.g. /Game/Maps/JapanFest_Street.
@@ -180,6 +184,7 @@ PIDS=()
 for idx in $(seq 0 $((N-1))); do
   VEH=${NAMES[$idx]}
   DOM=$((idx+1))
+  FH=${FLIGHT_HEIGHTS[$idx]:-$FLIGHT_HEIGHT}   # this drone's altitude band
   # FIX 1: this vehicle's slice of the team box, or empty (stock defaults)
   FIS_BBOX_ARGS=(); PLN_BBOX_ARGS=()
   if [ ${#BBOX[@]} -gt 0 ]; then
@@ -234,11 +239,15 @@ for idx in $(seq 0 $((N-1))); do
       -r camera_0/depth/image:=/sim/depth/image \
       -r camera_0/depth/camera_info:=/sim/depth/camera_info \
       > $LOG/nvblox_${LABEL}_$VEH.log 2>&1 &
-    ros2 launch active_exploration fis.launch.py flight_height:=$FLIGHT_HEIGHT \
+    ros2 launch active_exploration fis.launch.py flight_height:=$FH \
       geofence_margin:=${HERC_FIS_GEOFENCE_MARGIN:-1.4} \
       height_band:=${HERC_FIS_HEIGHT_BAND:-1.0} \
       vp_z_levels:=${HERC_FIS_VP_Z_LEVELS:-1} \
       vp_dz:=${HERC_FIS_VP_DZ:-0.5} \
+      frontier_z_neighbors:=${HERC_FIS_FRONTIER_Z_NEIGHBORS:-false} \
+      cluster_max_size_z:=${HERC_FIS_CLUSTER_MAX_SIZE_Z:-1000000000.0} \
+      vp_z_top:=${HERC_FIS_VP_Z_TOP:-false} \
+      fov_pitch_deg:=${HERC_FIS_FOV_PITCH_DEG:-0.0} \
       publish_grid_3d:=${HERC_FIS_PUBLISH_GRID_3D:-false} \
       "${FIS_BBOX_ARGS[@]}" \
       > $LOG/fis_${LABEL}_$VEH.log 2>&1 &
@@ -250,13 +259,14 @@ for idx in $(seq 0 $((N-1))); do
       namespace:=d$DOM serial_port:=/tmp/hercules_lora/drone$DOM \
       > $LOG/lorabridge_${LABEL}_$VEH.log 2>&1 &
     python3 $BASE/src/active_exploration/scripts/simple_exploration_planner.py \
-      --ros-args -p debug_skip_arm_check:=true -p flight_height:=$FLIGHT_HEIGHT -p vehicle_id:=$DOM \
+      --ros-args -p debug_skip_arm_check:=true -p flight_height:=$FH -p vehicle_id:=$DOM \
       -p odom_topic:=${HERC_ODOM_TOPIC:-/visual_slam/tracking/odometry_level} \
       "${PLN_BBOX_ARGS[@]}" "${PLN_THRESH_ARGS[@]}" \
       > $LOG/planner_${LABEL}_$VEH.log 2>&1 &
     CAP=$CAPTURE   # capture every drone (2x2 grid video)
     # NB_SENSORS=0: flight + PX4 stub + chase capture only, sensors owned by the C++ node.
     NB_OUT=$LOG/${LABEL}_$VEH NB_SECONDS=$SECS NB_VEH=$VEH \
+      HERC_FLIGHT_HEIGHT=$FH \
       NB_CAPTURE=$CAP NB_SENSORS=0 NB_STAGGER=$((idx*4)) \
       $BASE/venv/bin/python -u $BASE/cuvslam_sim_bridge.py \
       > $LOG/bridge_${LABEL}_$VEH.log 2>&1
