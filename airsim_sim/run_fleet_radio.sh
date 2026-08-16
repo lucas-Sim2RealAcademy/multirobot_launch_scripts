@@ -34,7 +34,7 @@
 set -e
 N=${1:-4}; SECS=${2:-180}
 BASE=/home/lucas/hercules-sim
-NVBLOX_YAML=$BASE/src/isaac_ros_nvblox/nvblox_examples/nvblox_examples_bringup/config/nvblox/nvblox_base.yaml
+NVBLOX_YAML=${HERC_NVBLOX_YAML:-$BASE/src/isaac_ros_nvblox/nvblox_examples/nvblox_examples_bringup/config/nvblox/nvblox_base.yaml}
 ALIGN_YAML=$BASE/src/multi_drone_nvblox/config/swarm_alignment.yaml
 RS_NODE=/home/lucas/UE5/hercules_wrapper_ws/install/airsim_ros_pkgs/lib/airsim_ros_pkgs/airsim_realsense_node
 # R2: patched cuVSLAM wrapper built from src/isaac_ros_visual_slam into the ros2_ws overlay
